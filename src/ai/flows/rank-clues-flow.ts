@@ -62,8 +62,11 @@ Basa tu ranking en:
 3. Para el Payaso: Qué tan bien su pista le ayuda a lograr su objetivo de ser votado. Esto podría significar dar una pista extraña, engañosa o que parezca de "Mr. White".
 4. Inteligencia general y adhesión al objetivo de su rol.
 
-DEBES proporcionar un ranking y una justificación para la pista de cada jugador.
-La salida debe ser un array de todos los jugadores, ordenados por tu ranking (la mejor pista primero).
+DEBES proporcionar un ranking y una justificación para la pista de CADA jugador.
+La salida DEBE ser un objeto JSON que coincida estrictamente con el esquema de salida proporcionado.
+El objeto JSON DEBE contener una clave llamada "rankedClues". El valor de "rankedClues" DEBE ser un array de objetos, donde cada objeto representa a un jugador y su pista rankeada.
+Incluso si tienes dificultades para rankear, o si no hay pistas significativas, o si hay muy pocos jugadores, DEBES devolver un array vacío para "rankedClues" si es necesario, por ejemplo: {"rankedClues": []}. NUNCA omitas la clave "rankedClues".
+Ordena el array "rankedClues" por tu ranking (la mejor pista primero, es decir, rank 1 arriba).
 Considera el contexto de todas las pistas dadas al rankear una pista individual.
 Asegúrate que la respuesta siempre sea un JSON válido que cumpla con el esquema de salida.
 `;
@@ -75,7 +78,7 @@ const rankCluesFlow = ai.defineFlow(
     outputSchema: RankCluesOutputSchema,
   },
   async (input) => {
-    const { output } = await ai.generate({
+    const { output, usage } = await ai.generate({
       prompt: `${rankCluesSystemPrompt}
 
 Palabra Civil: {{{civilianWord}}}
@@ -89,13 +92,30 @@ Proporciona tu ranking como un objeto JSON que coincida con el esquema de salida
       model: 'googleai/gemini-2.0-flash',
       output: { schema: RankCluesOutputSchema },
       config: {
-        temperature: 0.6, // Un poco de creatividad para las justificaciones pero manteniendo la consistencia.
+        temperature: 0.2, // Reducir para respuestas JSON más consistentes
       }
     });
-    if (!output?.rankedClues) {
-      console.error('AI response missing rankedClues:', output);
-      throw new Error('La IA no devolvió un ranking de pistas válido.');
+
+    // console.log('AI Usage for rankCluesFlow:', usage); // Descomentar para depurar uso
+    // console.log('Raw AI output for rankCluesFlow:', JSON.stringify(output, null, 2)); // Descomentar para depurar salida
+
+    if (!output) {
+      console.error('AI response was null or undefined after parsing. Model might have returned non-JSON or an error. Input to AI:', JSON.stringify(input, null, 2));
+      throw new Error('La IA no devolvió una respuesta JSON parseable o la respuesta fue nula.');
     }
+    
+    // La validación de esquema Zod ya asegura que output.rankedClues es un array si output es válido.
+    // Si output.rankedClues fuera undefined pero output sí existiera, el parseo de Zod habría fallado antes
+    // y output sería null/undefined.
+    // Por lo tanto, si llegamos aquí, output y output.rankedClues deberían estar definidos.
+    // Permitimos que output.rankedClues sea un array vacío según el prompt.
+
+    if (!output.rankedClues) { // Esta comprobación es redundante si el esquema Zod se aplica correctamente.
+                           // Pero la dejamos como una salvaguarda por si Zod no lanza error y aun asi es null.
+      console.error('AI response was parsed, but rankedClues is missing or null. Full AI output object:', JSON.stringify(output, null, 2));
+      throw new Error('La IA devolvió una respuesta, pero le faltaba el campo `rankedClues` o este era nulo.');
+    }
+    
     // Asegurar el orden por rank, aunque el modelo debería hacerlo.
     output.rankedClues.sort((a, b) => a.rank - b.rank);
     return output;
