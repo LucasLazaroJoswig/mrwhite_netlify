@@ -11,14 +11,17 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { List, User, Eye, CheckCircle, HelpCircle, RotateCcw, Sparkles, Settings2, UsersRound, Brain, MessageSquarePlus, Send, Vote as VoteIcon, VenetianMask, ShieldQuestion, Users, Shuffle, Mic2 } from 'lucide-react';
+import { List, User, Eye, CheckCircle, HelpCircle, RotateCcw, Sparkles, Settings2, UsersRound, Brain, MessageSquarePlus, Send, Vote as VoteIcon, VenetianMask, ShieldQuestion, Users, Shuffle, Mic2, Lightbulb, Copy } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { initializePlayers, MR_WHITE_MESSAGE, PAYASO_MESSAGE_PREFIX } from '@/lib/game-logic';
+import { initializePlayers, MR_WHITE_MESSAGE } from '@/lib/game-logic';
 import { rankClues } from '@/ai/flows/rank-clues-flow';
+import { suggestClue } from '@/ai/flows/suggest-clue-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+
 
 interface GameDisplayProps {
   gameData: GameData;
@@ -39,13 +42,13 @@ const RoleImage = ({ role, altText, className }: { role: Player['role'], altText
   let src = "https://placehold.co/150x150.png?text=Rol";
   let hint = "question mark";
   if (role === 'civilian') {
-    src = "https://placehold.co/150x150/78909C/FFFFFF.png?text=Civil"; // Blue Grey
+    src = "https://placehold.co/150x150/78909C/FFFFFF.png?text=Civil";
     hint = "group people";
   } else if (role === 'mrwhite') {
-    src = "https://placehold.co/150x150/263238/FFFFFF.png?text=Mr.W"; // Dark Grey
+    src = "https://placehold.co/150x150/263238/FFFFFF.png?text=Mr.W";
     hint = "detective mystery";
   } else if (role === 'payaso') {
-    src = "https://placehold.co/150x150/FF8F00/FFFFFF.png?text=Payaso"; // Amber
+    src = "https://placehold.co/150x150/FF8F00/FFFFFF.png?text=Payaso";
     hint = "clown mask";
   }
 
@@ -73,6 +76,13 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
   
   const [isRankingLoading, setIsRankingLoading] = useState(false);
   const [rankingError, setRankingError] = useState<string | null>(null);
+
+  const [isSuggestingClue, setIsSuggestingClue] = useState<string | null>(null); // Player ID for whom suggestion is active
+  const [showSuggestionModal, setShowSuggestionModal] = useState(false);
+  const [clueSuggestion, setClueSuggestion] = useState<{ clue: string, justification: string } | null>(null);
+  const [suggestionError, setSuggestionError] = useState<string | null>(null);
+
+  const { toast } = useToast();
 
   const allPlayersWordRevealed = gameData.players.every(p => p.wordRevealed);
 
@@ -119,7 +129,8 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
       setGameData(prev => prev ? ({ ...prev, clueRanking: rankedOutput.rankedClues }) : null);
     } catch (err) {
       console.error("Error ranking clues:", err);
-      setRankingError("Error al obtener el ranking de pistas de la IA. Revisa los logs del servidor de Genkit.");
+      const errorMessage = err instanceof Error ? err.message : "Error desconocido al rankear pistas.";
+      setRankingError(`Error al obtener el ranking de pistas de la IA. ${errorMessage}`);
     } finally {
       setIsRankingLoading(false);
     }
@@ -138,7 +149,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
   const handleRevealWord = () => {
     if (!currentPlayer) return;
-    setPlayerForModal(currentPlayer); // Set specific player for modal
+    setPlayerForModal(currentPlayer);
     setShowWordModal(true);
   };
 
@@ -150,7 +161,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     );
     
     setGameData(prev => prev ? { ...prev, players: updatedPlayers } : null);
-    setShowWordModal(false); // Close modal
+    setShowWordModal(false); 
     // playerForModal will be cleared by onOpenChange of Dialog
   };
   
@@ -167,6 +178,8 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     setSelectedAccusationTargetId(null);
     setIsRankingLoading(false);
     setRankingError(null);
+    setClueSuggestion(null);
+    setSuggestionError(null);
   };
 
   const handleClueChange = (playerId: string, value: string) => {
@@ -184,7 +197,36 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
       votedPlayerId: selectedAccusationTargetId, 
       gamePhase: 'results' 
     }) : null);
-    setSelectedAccusationTargetId(null);
+    setSelectedAccusationTargetId(null); // Reset for next potential game
+    // setShowAccusationModal(false); // Already handled by Dialog's onOpenChange
+  };
+
+  const handleSuggestClue = async (player: Player) => {
+    setIsSuggestingClue(player.id);
+    setSuggestionError(null);
+    setClueSuggestion(null);
+    setShowSuggestionModal(true);
+    try {
+      const suggestion = await suggestClue({
+        civilianWord: gameData.civilianWord,
+        playerRole: player.role,
+      });
+      setClueSuggestion(suggestion);
+    } catch (err) {
+      console.error("Error suggesting clue:", err);
+      const errorMessage = err instanceof Error ? err.message : "Error desconocido al sugerir pista.";
+      setSuggestionError(`Error al obtener sugerencia: ${errorMessage}`);
+    } finally {
+      setIsSuggestingClue(null);
+    }
+  };
+
+  const handleCopySuggestion = (clue: string) => {
+    navigator.clipboard.writeText(clue).then(() => {
+      toast({ title: "Pista copiada", description: `"${clue}" copiada al portapapeles.`});
+    }).catch(err => {
+      toast({ variant: "destructive", title: "Error al copiar", description: "No se pudo copiar la pista."});
+    });
   };
 
   const getRoleDisplayName = (role: Player['role']) => {
@@ -197,6 +239,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
   // Fase 1: Revelando palabras
   if (gameData.gamePhase === 'wordReveal') {
+    // ... (sin cambios significativos, se mantiene la lógica existente)
     if (!currentPlayer && allPlayersWordRevealed) {
       return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -253,7 +296,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
             <Dialog open={showWordModal} onOpenChange={(isOpen) => { 
                 setShowWordModal(isOpen); 
-                if (!isOpen) setTimeout(() => setPlayerForModal(null), 300); // Delay clearing to allow fade-out
+                if (!isOpen) setTimeout(() => setPlayerForModal(null), 300);
               }}>
               <DialogContent className="sm:max-w-lg bg-card shadow-2xl rounded-lg border-primary/50">
                 {playerForModal && (
@@ -313,7 +356,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
               </CardContent>
             </Card>
             <div className="mt-8 text-center">
-                <Button onClick={handleStartNewGameSetup} variant="outline" className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive-foreground">
+                <Button onClick={handleStartNewGameSetup} variant="outline" className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive">
                   <Settings2 className="mr-2" /> Nueva Configuración
                 </Button>
             </div>
@@ -342,23 +385,35 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 px-6 md:px-8">
-            <ScrollArea className="h-[calc(100vh-500px)] min-h-[200px] pr-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            <ScrollArea className="h-[calc(100vh-550px)] min-h-[200px] pr-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                 {gameData.players.map(player => (
                   <div key={player.id} className="space-y-1.5 p-3 bg-secondary/30 rounded-lg border border-border">
                     <Label htmlFor={`clue-${player.id}`} className="text-base font-medium text-foreground/90 flex items-center">
                       <User className="w-4 h-4 mr-2 text-primary" />Pista de {player.name}:
                     </Label>
-                    <Input 
-                      id={`clue-${player.id}`}
-                      type="text"
-                      value={playerCluesLocal[player.id] || ''}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => handleClueChange(player.id, e.target.value)}
-                      placeholder="Tu palabra pista..."
-                      className="bg-input border-border focus:border-accent focus:ring-accent text-base"
-                      maxLength={25}
-                      disabled={gameData.gamePhase === 'selectAccused'}
-                    />
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        id={`clue-${player.id}`}
+                        type="text"
+                        value={playerCluesLocal[player.id] || ''}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => handleClueChange(player.id, e.target.value)}
+                        placeholder="Tu palabra pista..."
+                        className="flex-grow bg-input border-border focus:border-accent focus:ring-accent text-base"
+                        maxLength={25}
+                        disabled={gameData.gamePhase === 'selectAccused'}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleSuggestClue(player)}
+                        disabled={isSuggestingClue === player.id || gameData.gamePhase === 'selectAccused'}
+                        className="text-accent hover:bg-accent/20 p-2"
+                        aria-label={`Sugerir pista para ${player.name}`}
+                      >
+                        {isSuggestingClue === player.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <Lightbulb className="h-5 w-5" />}
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -382,7 +437,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
         </Card>
         
         <Dialog open={showAccusationModal} onOpenChange={(isOpen) => {
-          if (!isOpen && gameData.gamePhase === 'selectAccused') {
+          if (!isOpen && gameData.gamePhase === 'selectAccused') { // If closed without confirming
             setGameData(prev => prev ? { ...prev, gamePhase: 'discussionAndClues' } : null);
           }
           setShowAccusationModal(isOpen);
@@ -416,6 +471,49 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Modal para Sugerencia de Pista */}
+        <Dialog open={showSuggestionModal} onOpenChange={setShowSuggestionModal}>
+            <DialogContent className="sm:max-w-md bg-card shadow-xl rounded-lg border-accent/50">
+                <DialogHeader>
+                    <DialogTitle className="text-2xl text-accent flex items-center gap-2"><Lightbulb /> Sugerencia de Pista IA</DialogTitle>
+                </DialogHeader>
+                <div className="my-4 space-y-3">
+                    {isSuggestingClue && !clueSuggestion && !suggestionError && (
+                        <div className="flex items-center justify-center space-x-2 p-4">
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                            <p className="text-muted-foreground">Generando sugerencia...</p>
+                        </div>
+                    )}
+                    {suggestionError && (
+                        <Alert variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>Error de Sugerencia</AlertTitle>
+                            <AlertDescription>{suggestionError}</AlertDescription>
+                        </Alert>
+                    )}
+                    {clueSuggestion && (
+                        <Card className="bg-secondary/30 p-4">
+                            <CardContent className="p-0 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-2xl font-semibold text-primary">{clueSuggestion.clue}</p>
+                                    <Button variant="ghost" size="icon" onClick={() => handleCopySuggestion(clueSuggestion.clue)} className="text-muted-foreground hover:text-accent">
+                                        <Copy className="h-5 w-5" />
+                                    </Button>
+                                </div>
+                                <p className="text-sm text-muted-foreground italic"><strong>Justificación IA:</strong> {clueSuggestion.justification}</p>
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="outline">Cerrar</Button>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
       </div>
     );
   }
@@ -438,13 +536,13 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
         if (mrWhitesWin) {
           winnerMessage = `¡Mr. White (${gameData.mrWhiteNames?.join(', ')}) ha ganado! ${votedPlayer.name} era un Civil.`;
           winnerIcon = <ShieldQuestion className="h-8 w-8 text-destructive" />;
-        } else {
-           winnerMessage = `¡Vaya! ${votedPlayer.name} era un Civil. Error en la configuración de roles.`;
+        } else { // Should not happen if roles are assigned correctly
+           winnerMessage = `¡Vaya! ${votedPlayer.name} era un Civil. No había Mr. White o error en la configuración.`;
            winnerIcon = <HelpCircle className="h-8 w-8 text-muted-foreground" />;
         }
       }
     } else {
-      winnerMessage = "No se registró ningún voto. Error en la partida.";
+      winnerMessage = "No se registró ningún voto. Error en la partida."; // Fallback
       winnerIcon = <HelpCircle className="h-8 w-8 text-muted-foreground" />;
     }
     
@@ -463,7 +561,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6 px-6 md:px-8">
-            <Alert variant="default" className="bg-accent/10 border-accent/50 rounded-lg text-center">
+            <Alert variant="default" className="bg-accent/10 border-accent/50 rounded-lg text-center relative">
                {votedPlayer && <Badge variant="default" className="absolute -top-3 -right-3 px-2 py-1 text-xs bg-destructive text-destructive-foreground">{votedPlayer.name} fue acusado</Badge>}
               <AlertTitle className="text-xl font-semibold text-accent">{winnerMessage}</AlertTitle>
             </Alert>
@@ -484,7 +582,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
               <h3 className="text-2xl font-semibold mb-4 flex items-center justify-center gap-2 text-primary"><Brain className="w-7 h-7" /> Ranking de Pistas (IA)</h3>
               {isRankingLoading && (
                 <div className="space-y-3 mt-2">
-                  {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-lg bg-muted/50" />)}
+                  {[...Array(gameData.players.length || 3)].map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-lg bg-muted/50" />)}
                 </div>
               )}
               {rankingError && <Alert variant="destructive" className="mt-2"><AlertTitle>Error de IA</AlertTitle><AlertDescription>{rankingError}</AlertDescription></Alert>}
@@ -531,7 +629,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     );
   }
 
-  // Fallback si no coincide ninguna fase (debería ser raro)
+  // Fallback
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <Card className="w-full max-w-md shadow-xl text-center bg-card border-destructive/50">
@@ -546,3 +644,5 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     </div>
   );
 }
+
+    
