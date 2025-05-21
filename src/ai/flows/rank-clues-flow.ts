@@ -6,25 +6,25 @@
  * - rankClues - A function that calls the Genkit flow to rank clues.
  * - RankCluesInput - The input type for the rankClues flow.
  * - RankCluesOutput - The return type for the rankClues flow.
- * - ClueRankingItemSchema - Schema for an individual ranked clue.
+ * - ClueRankingItem - Type for an individual ranked clue item.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const PlayerClueInputSchema = z.object({
+const PlayerClueInputSchema = z.object({
   name: z.string().describe('Nombre del jugador.'),
   role: z.enum(['civilian', 'mrwhite', 'payaso']).describe('Rol del jugador en la partida.'),
   clue: z.string().describe('Palabra pista dada por el jugador.'),
 });
 
-export const RankCluesInputSchema = z.object({
+const RankCluesInputSchema = z.object({
   civilianWord: z.string().describe('La palabra secreta para los civiles y el payaso.'),
   players: z.array(PlayerClueInputSchema).describe('Lista de jugadores con sus roles y pistas.'),
 });
 export type RankCluesInput = z.infer<typeof RankCluesInputSchema>;
 
-export const ClueRankingItemSchema = z.object({
+const ClueRankingItemSchema = z.object({
   playerName: z.string().describe('Nombre del jugador.'),
   clue: z.string().describe('La pista dada por el jugador.'),
   role: z.enum(['civilian', 'mrwhite', 'payaso']).describe('Rol del jugador durante la partida.'),
@@ -33,7 +33,7 @@ export const ClueRankingItemSchema = z.object({
 });
 export type ClueRankingItem = z.infer<typeof ClueRankingItemSchema>;
 
-export const RankCluesOutputSchema = z.object({
+const RankCluesOutputSchema = z.object({
   rankedClues: z.array(ClueRankingItemSchema).describe('Una lista de pistas, rankeadas de mejor a peor, con justificaciones.'),
 });
 export type RankCluesOutput = z.infer<typeof RankCluesOutputSchema>;
