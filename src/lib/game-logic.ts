@@ -1,5 +1,5 @@
 
-import type { Player } from './types';
+import type { Player, GameData } from './types';
 
 export const SECRET_WORDS = [
   // Originales
@@ -46,6 +46,7 @@ export const SECRET_WORDS = [
 ];
 
 export const MR_WHITE_MESSAGE = "Eres Mr. White";
+export const PAYASO_MESSAGE_PREFIX = "Eres el Payaso. Tu palabra es"; // Se completará con la palabra civil
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 16;
 
@@ -61,7 +62,7 @@ function shuffleArray<T>(array: T[]): T[] {
 export function initializePlayers(
   playerNames: string[],
   previousCivilianWord?: string
-): { players: Player[]; civilianWord: string; mrWhiteNames: string[] } {
+): GameData {
   if (playerNames.length < MIN_PLAYERS || playerNames.length > MAX_PLAYERS) {
     throw new Error(`El número de jugadores debe estar entre ${MIN_PLAYERS} y ${MAX_PLAYERS}.`);
   }
@@ -70,47 +71,71 @@ export function initializePlayers(
   if (previousCivilianWord) {
     availableWords = SECRET_WORDS.filter(word => word !== previousCivilianWord);
     if (availableWords.length === 0) {
-      availableWords = SECRET_WORDS; // Fallback si se agotan o solo había una palabra
+      availableWords = SECRET_WORDS;
     }
   }
   
   const civilianWord = availableWords[Math.floor(Math.random() * availableWords.length)];
   
   let numberOfMrWhites = 1;
-  if (playerNames.length >= 14) {
-    numberOfMrWhites = 4;
-  } else if (playerNames.length >= 10) {
-    numberOfMrWhites = 3;
-  } else if (playerNames.length >= 6) {
-    numberOfMrWhites = 2;
-  }
+  if (playerNames.length >= 14) numberOfMrWhites = 4;
+  else if (playerNames.length >= 10) numberOfMrWhites = 3;
+  else if (playerNames.length >= 6) numberOfMrWhites = 2;
 
-  // Crear una lista de índices de jugadores para barajar y seleccionar a los Mr. White
   const playerIndices = Array.from(Array(playerNames.length).keys());
-  const shuffledPlayerIndices = shuffleArray(playerIndices);
+  let shuffledPlayerIndices = shuffleArray(playerIndices);
 
   const mrWhiteIndices = new Set<number>();
   for (let i = 0; i < numberOfMrWhites; i++) {
     mrWhiteIndices.add(shuffledPlayerIndices[i]);
   }
 
+  let payasoIndex: number | undefined = undefined;
+  let payasoName: string | undefined = undefined;
+
+  if (playerNames.length >= 7) {
+    const potentialPayasoIndices = shuffledPlayerIndices.filter(index => !mrWhiteIndices.has(index));
+    if (potentialPayasoIndices.length > 0) {
+      payasoIndex = potentialPayasoIndices[Math.floor(Math.random() * potentialPayasoIndices.length)];
+    }
+  }
+
   const mrWhiteNamesList: string[] = [];
   const players: Player[] = playerNames.map((name, index) => {
     const isMrWhite = mrWhiteIndices.has(index);
+    const isPayaso = index === payasoIndex;
+    let role: 'civilian' | 'mrwhite' | 'payaso' = 'civilian';
+    let word = civilianWord;
+
     if (isMrWhite) {
+      role = 'mrwhite';
+      word = MR_WHITE_MESSAGE;
       mrWhiteNamesList.push(name);
+    } else if (isPayaso) {
+      role = 'payaso';
+      word = civilianWord; // Payaso conoce la palabra
+      payasoName = name;
     }
+
     return {
-      id: `${name}-${index}-${Date.now()}`, // ID único para cada jugador
+      id: `${name.replace(/\s+/g, '-')}-${index}-${Date.now()}`,
       name,
-      word: isMrWhite ? MR_WHITE_MESSAGE : civilianWord,
-      isMrWhite: isMrWhite,
+      word,
+      isMrWhite: role === 'mrwhite', // Para compatibilidad o lógica simple
+      role,
       wordRevealed: false,
+      clue: '', // Inicializar clue
     };
   });
 
-  // Barajar la lista final de jugadores para el orden de juego
-  return { players: shuffleArray(players), civilianWord, mrWhiteNames: mrWhiteNamesList };
+  return {
+    players: shuffleArray(players), // Barajar el orden de juego final
+    civilianWord,
+    mrWhiteNames: mrWhiteNamesList,
+    payasoName,
+    gamePhase: 'wordReveal',
+    playerClues: {},
+    votedPlayerId: undefined,
+    clueRanking: undefined,
+  };
 }
-
-    

@@ -8,6 +8,8 @@ import { useRouter } from 'next/navigation';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { initializePlayers } from '@/lib/game-logic';
+
 
 export default function GamePlayWrapper() {
   const [gameData, setGameData] = useState<GameData | null>(null);
@@ -20,13 +22,32 @@ export default function GamePlayWrapper() {
       const storedData = localStorage.getItem('mrWhiteGameData');
       if (storedData) {
         const parsedData: GameData = JSON.parse(storedData);
-        // Validación básica mejorada para la nueva estructura de GameData
-        if (parsedData && parsedData.players && parsedData.players.length > 0 && parsedData.civilianWord) {
-          // mrWhiteNames es opcional en la carga inicial si es una partida antigua,
-          // la lógica de initializePlayers se encargará de crearlo en nuevas partidas.
-          setGameData(parsedData);
+        // Enhanced validation for the new GameData structure
+        if (
+          parsedData &&
+          parsedData.players &&
+          parsedData.players.length > 0 &&
+          parsedData.civilianWord &&
+          parsedData.gamePhase // Ensure gamePhase exists
+        ) {
+          // Ensure new optional fields exist or initialize them if loading older data
+          const validatedGameData: GameData = {
+            ...parsedData,
+            payasoName: parsedData.payasoName || undefined,
+            playerClues: parsedData.playerClues || {},
+            votedPlayerId: parsedData.votedPlayerId || undefined,
+            clueRanking: parsedData.clueRanking || undefined,
+          };
+          // Ensure all players have a role and clue property
+          validatedGameData.players = validatedGameData.players.map(p => ({
+            ...p,
+            role: p.role || (p.isMrWhite ? 'mrwhite' : 'civilian'), // Basic role inference for older data
+            clue: p.clue || '',
+          }));
+
+          setGameData(validatedGameData);
         } else {
-          setError("Datos de partida inválidos. Por favor, inicia una nueva partida.");
+          setError("Datos de partida inválidos o incompletos. Por favor, inicia una nueva partida.");
           localStorage.removeItem('mrWhiteGameData');
         }
       } else {
@@ -41,7 +62,7 @@ export default function GamePlayWrapper() {
     }
   }, []);
 
-  // Efecto para guardar gameData en localStorage cuando cambie
+  // Effect to save gameData to localStorage when it changes
   useEffect(() => {
     if (gameData && !loading) { 
       localStorage.setItem('mrWhiteGameData', JSON.stringify(gameData));
@@ -77,6 +98,21 @@ export default function GamePlayWrapper() {
       </div>
     );
   }
+  
+  // Fallback if gameData.players is somehow empty after loading. Reinitialize.
+  if (gameData && gameData.players.length === 0) {
+     const playerNames = ["Jugador1", "Jugador2", "Jugador3"]; // Default players
+     const newGameData = initializePlayers(playerNames);
+     setGameData(newGameData);
+     // This will cause a re-render and the game will proceed with new data
+     return (
+      <div className="flex flex-col justify-center items-center min-h-screen p-4 space-y-4 text-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="text-lg text-muted-foreground">Reiniciando datos de partida...</p>
+      </div>
+    );
+  }
+
 
   return <GameDisplay gameData={gameData} setGameData={setGameData} />;
 }
