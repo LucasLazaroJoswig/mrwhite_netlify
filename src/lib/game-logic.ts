@@ -3,11 +3,13 @@ import type { Player } from './types';
 export const SECRET_WORDS = [
   "Manzana", "Playa", "Coche", "Perro", "Sol", "Luna", "Libro", "Silla", "Casa", "Río",
   "Montaña", "Bosque", "Nube", "Estrella", "Llave", "Candado", "Puente", "Camino", "Barco", "Tren",
-  "Flor", "Jardín", "Rueda", "Gato", "Avión", "Escuela", "Raton", "Mesa", "Ventana", "Lapiz"
+  "Flor", "Jardín", "Rueda", "Gato", "Avión", "Escuela", "Ratón", "Mesa", "Ventana", "Lápiz",
+  "Reloj", "Barco", "Vaso", "Tenedor", "Cuchara", "Plato", "Calcetín", "Zapato", "Abrigo", "Sombrero",
+  "Guante", "Bufanda", "Pantalón", "Camisa", "Fal_da", "Vestido", "Anillo", "Collar", "Pulsera", "Pendiente"
 ];
 export const MR_WHITE_MESSAGE = "Eres Mr. White";
 export const MIN_PLAYERS = 3;
-export const MAX_PLAYERS = 16; // Aumentado a 16
+export const MAX_PLAYERS = 16;
 
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
@@ -18,12 +20,25 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export function initializePlayers(playerNames: string[]): { players: Player[], civilianWord: string, mrWhiteNames: string[] } {
+export function initializePlayers(
+  playerNames: string[],
+  previousCivilianWord?: string
+): { players: Player[]; civilianWord: string; mrWhiteNames: string[] } {
   if (playerNames.length < MIN_PLAYERS || playerNames.length > MAX_PLAYERS) {
     throw new Error(`El número de jugadores debe estar entre ${MIN_PLAYERS} y ${MAX_PLAYERS}.`);
   }
 
-  const civilianWord = SECRET_WORDS[Math.floor(Math.random() * SECRET_WORDS.length)];
+  let availableWords = SECRET_WORDS;
+  if (previousCivilianWord) {
+    availableWords = SECRET_WORDS.filter(word => word !== previousCivilianWord);
+    if (availableWords.length === 0) {
+      // Fallback: si todas las palabras disponibles ya se usaron (poco probable con una lista grande)
+      // o si la palabra anterior era la única en la lista, simplemente usamos la lista completa.
+      availableWords = SECRET_WORDS;
+    }
+  }
+  
+  const civilianWord = availableWords[Math.floor(Math.random() * availableWords.length)];
   
   let numberOfMrWhites = 1;
   if (playerNames.length >= 14) {
@@ -34,7 +49,6 @@ export function initializePlayers(playerNames: string[]): { players: Player[], c
     numberOfMrWhites = 2;
   }
 
-  // Seleccionar índices aleatorios para los Mr. White
   const shuffledPlayerIndices = Array.from(Array(playerNames.length).keys());
   for (let i = shuffledPlayerIndices.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -53,7 +67,7 @@ export function initializePlayers(playerNames: string[]): { players: Player[], c
       mrWhiteNamesList.push(name);
     }
     return {
-      id: `${name}-${index}-${Date.now()}`, // Simple unique ID
+      id: `${name}-${index}-${Date.now()}`,
       name,
       word: isMrWhite ? MR_WHITE_MESSAGE : civilianWord,
       isMrWhite: isMrWhite,
@@ -61,6 +75,5 @@ export function initializePlayers(playerNames: string[]): { players: Player[], c
     };
   });
 
-  // Barajar jugadores para el orden de turno y para ocultar la posición original de Mr. White
   return { players: shuffleArray(players), civilianWord, mrWhiteNames: mrWhiteNamesList };
 }

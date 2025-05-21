@@ -32,11 +32,10 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     if (!allPlayerWordsRevealedStatus) {
       const nextPlayerIdx = gameData.players.findIndex(p => !p.wordRevealed);
       setCurrentPlayerIndex(nextPlayerIdx !== -1 ? nextPlayerIdx : 0);
-      setResultsVisible(false); // Asegura que los resultados se oculten si se reinicia la revelación
+      setResultsVisible(false); 
+      setPlayerForModal(null); 
     } else {
-      // Si todas las palabras han sido reveladas, pero los resultados no, estamos en fase de discusión.
-      // Si los resultados ya son visibles, estamos en la fase final.
-      // No es necesario cambiar currentPlayerIndex aquí ya que no se usa para turnos en estas fases.
+      // No es necesario cambiar currentPlayerIndex aquí
     }
   }, [gameData]);
 
@@ -46,13 +45,13 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
   const handleRevealWord = () => {
     if (!currentPlayer) return;
-    setPlayerForModal(currentPlayer);
+    setPlayerForModal(currentPlayer); // Mostrar la palabra del jugador actual en el modal
     setShowWordModal(true);
   };
 
   const handleWordSeen = () => {
     setShowWordModal(false);
-    if (!playerForModal) return;
+    if (!playerForModal) return; // Asegurar que playerForModal existe
 
     const updatedPlayers = gameData.players.map((p) =>
       p.id === playerForModal.id ? { ...p, wordRevealed: true } : p
@@ -60,7 +59,8 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     
     const newGameData = { ...gameData, players: updatedPlayers };
     setGameData(newGameData); 
-    // playerForModal se limpiará automáticamente al cerrar el diálogo o si cambia la fase del juego.
+    // No limpiar playerForModal aquí, se limpiará en el useEffect si cambia la fase,
+    // o al cerrar el diálogo (onOpenChange)
   };
   
   const handleStartNewGameSetup = () => {
@@ -70,17 +70,17 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
   const handlePlayAgainSamePlayers = () => {
     const playerNames = gameData.players.map(p => p.name);
-    const newGameSetup = initializePlayers(playerNames);
+    // Pasar la palabra civil actual para intentar evitar su repetición
+    const newGameSetup = initializePlayers(playerNames, gameData.civilianWord);
     setGameData(newGameSetup);
-    // El useEffect que observa gameData reseteará los estados locales necesarios:
-    // currentPlayerIndex, allWordsRevealed, resultsVisible, showWordModal, playerForModal.
+    // El useEffect que observa gameData reseteará los estados locales necesarios.
   };
 
   const handleRevealResults = () => {
     setResultsVisible(true);
   };
 
-  // Phase 1: Revealing words to players
+  // Fase 1: Revelando palabras a los jugadores
   if (!allWordsRevealed) {
     if (!currentPlayer) {
       return (
@@ -121,7 +121,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
             <Dialog open={showWordModal} onOpenChange={(isOpen) => {
               setShowWordModal(isOpen);
-              if (!isOpen) setPlayerForModal(null); 
+              if (!isOpen) setPlayerForModal(null); // Limpiar playerForModal al cerrar
             }}>
               <DialogContent className="sm:max-w-md bg-card shadow-2xl rounded-lg">
                 <DialogHeader>
@@ -188,7 +188,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     );
   }
 
-  // Phase 2: Discussion phase (all words revealed, but results not yet visible)
+  // Fase 2: Discusión (todas las palabras reveladas, resultados aún no visibles)
   if (allWordsRevealed && !resultsVisible) {
     const discussionStarter = gameData.players.length > 0 ? gameData.players[0].name : "El primer jugador";
     return (
@@ -219,15 +219,17 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     );
   }
 
-  // Phase 3: Results are visible
+  // Fase 3: Resultados visibles
   if (allWordsRevealed && resultsVisible) {
     const mrWhiteDisplayNames = gameData.mrWhiteNames && gameData.mrWhiteNames.length > 0 
       ? gameData.mrWhiteNames.join(', ') 
-      : 'Nadie (esto es un error)';
+      : 'Nadie (esto es un error, ¡todos son civiles!)';
     
     const mrWhiteLabel = gameData.mrWhiteNames && gameData.mrWhiteNames.length > 1 
       ? "Los Mr. White eran: " 
       : "Mr. White era: ";
+    
+    const noMrWhites = !gameData.mrWhiteNames || gameData.mrWhiteNames.length === 0;
 
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 space-y-6">
@@ -239,7 +241,11 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-lg">La palabra civil era: <strong className="text-primary">{gameData.civilianWord}</strong></p>
-            <p className="text-lg mb-4">{mrWhiteLabel}<strong className="text-accent">{mrWhiteDisplayNames}</strong></p>
+            {noMrWhites ? (
+              <p className="text-lg mb-4 text-accent">¡Vaya! Parece que no hubo Mr. White en esta ronda.</p>
+            ) : (
+              <p className="text-lg mb-4">{mrWhiteLabel}<strong className="text-accent">{mrWhiteDisplayNames}</strong></p>
+            )}
             
             <Button onClick={handlePlayAgainSamePlayers} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
               <RotateCcw className="mr-2" /> Jugar de Nuevo (Mismos Jugadores)
@@ -253,7 +259,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     );
   }
 
-  // Fallback, should ideally not be reached
+  // Fallback, idealmente no se alcanza
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       Cargando estado del juego...
