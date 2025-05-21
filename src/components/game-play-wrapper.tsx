@@ -20,8 +20,10 @@ export default function GamePlayWrapper() {
       const storedData = localStorage.getItem('mrWhiteGameData');
       if (storedData) {
         const parsedData: GameData = JSON.parse(storedData);
-        // Basic validation
+        // Validación básica mejorada para la nueva estructura de GameData
         if (parsedData && parsedData.players && parsedData.players.length > 0 && parsedData.civilianWord) {
+          // mrWhiteNames es opcional en la carga inicial si es una partida antigua,
+          // la lógica de initializePlayers se encargará de crearlo en nuevas partidas.
           setGameData(parsedData);
         } else {
           setError("Datos de partida inválidos. Por favor, inicia una nueva partida.");
@@ -39,9 +41,9 @@ export default function GamePlayWrapper() {
     }
   }, []);
 
-  // Effect to save gameData to localStorage whenever it changes
+  // Efecto para guardar gameData en localStorage cuando cambie
   useEffect(() => {
-    if (gameData && !loading) { // Ensure not to save during initial load if data is null
+    if (gameData && !loading) { 
       localStorage.setItem('mrWhiteGameData', JSON.stringify(gameData));
     }
   }, [gameData, loading]);

@@ -9,5 +9,5 @@ export interface Player {
 export interface GameData {
   players: Player[];
   civilianWord: string;
-  mrWhiteName?: string; // Optional: store Mr. White's name for easier reveal later
+  mrWhiteNames?: string[]; // Cambiado a un array para múltiples Mr. Whites
 }
