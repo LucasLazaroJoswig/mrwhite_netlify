@@ -4,14 +4,14 @@
 import type { Dispatch, SetStateAction, ChangeEvent } from 'react';
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import type { GameData, Player } from '@/lib/types';
+import type { GameData, Player, ClueRankingItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { List, User, Eye, CheckCircle, HelpCircle, RotateCcw, Sparkles, Settings2, UsersRound, Brain, MessageSquarePlus, Send, Vote as VoteIcon, VenetianMask, ShieldQuestion, Users, Shuffle, Mic2, Lightbulb, Copy } from 'lucide-react';
+import { List, User, Eye, CheckCircle, HelpCircle, RotateCcw, Sparkles, Settings2, UsersRound, Brain, Mic2, Send, Vote as VoteIcon, VenetianMask, ShieldQuestion, Users, Shuffle, Lightbulb, Copy, Loader2, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -77,10 +77,12 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
   const [isRankingLoading, setIsRankingLoading] = useState(false);
   const [rankingError, setRankingError] = useState<string | null>(null);
 
-  const [isSuggestingClue, setIsSuggestingClue] = useState<string | null>(null); // Player ID for whom suggestion is active
+  const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
   const [showSuggestionModal, setShowSuggestionModal] = useState(false);
   const [clueSuggestion, setClueSuggestion] = useState<{ clue: string, justification: string } | null>(null);
   const [suggestionError, setSuggestionError] = useState<string | null>(null);
+  const [selectedRoleForSuggestion, setSelectedRoleForSuggestion] = useState<Player['role'] | null>(null);
+
 
   const { toast } = useToast();
 
@@ -180,6 +182,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     setRankingError(null);
     setClueSuggestion(null);
     setSuggestionError(null);
+    setSelectedRoleForSuggestion(null);
   };
 
   const handleClueChange = (playerId: string, value: string) => {
@@ -197,19 +200,28 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
       votedPlayerId: selectedAccusationTargetId, 
       gamePhase: 'results' 
     }) : null);
-    setSelectedAccusationTargetId(null); // Reset for next potential game
-    // setShowAccusationModal(false); // Already handled by Dialog's onOpenChange
+    setSelectedAccusationTargetId(null); 
   };
 
-  const handleSuggestClue = async (player: Player) => {
-    setIsSuggestingClue(player.id);
+  const handleOpenSuggestionModal = () => {
+    setClueSuggestion(null);
+    setSuggestionError(null);
+    setSelectedRoleForSuggestion(null);
+    setShowSuggestionModal(true);
+  };
+  
+  const handleGenerateSuggestion = async () => {
+    if (!selectedRoleForSuggestion) {
+      setSuggestionError("Por favor, selecciona un rol para la sugerencia.");
+      return;
+    }
+    setIsGeneratingSuggestion(true);
     setSuggestionError(null);
     setClueSuggestion(null);
-    setShowSuggestionModal(true);
     try {
       const suggestion = await suggestClue({
         civilianWord: gameData.civilianWord,
-        playerRole: player.role,
+        playerRole: selectedRoleForSuggestion,
       });
       setClueSuggestion(suggestion);
     } catch (err) {
@@ -217,7 +229,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
       const errorMessage = err instanceof Error ? err.message : "Error desconocido al sugerir pista.";
       setSuggestionError(`Error al obtener sugerencia: ${errorMessage}`);
     } finally {
-      setIsSuggestingClue(null);
+      setIsGeneratingSuggestion(false);
     }
   };
 
@@ -229,7 +241,8 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     });
   };
 
-  const getRoleDisplayName = (role: Player['role']) => {
+  const getRoleDisplayName = (role: Player['role'] | null) => {
+    if (!role) return 'Desconocido';
     if (role === 'civilian') return 'Civil';
     if (role === 'mrwhite') return 'Mr. White';
     if (role === 'payaso') return 'Payaso';
@@ -239,7 +252,6 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
   // Fase 1: Revelando palabras
   if (gameData.gamePhase === 'wordReveal') {
-    // ... (sin cambios significativos, se mantiene la lógica existente)
     if (!currentPlayer && allPlayersWordRevealed) {
       return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -403,16 +415,6 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                         maxLength={25}
                         disabled={gameData.gamePhase === 'selectAccused'}
                       />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleSuggestClue(player)}
-                        disabled={isSuggestingClue === player.id || gameData.gamePhase === 'selectAccused'}
-                        className="text-accent hover:bg-accent/20 p-2"
-                        aria-label={`Sugerir pista para ${player.name}`}
-                      >
-                        {isSuggestingClue === player.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <Lightbulb className="h-5 w-5" />}
-                      </Button>
                     </div>
                   </div>
                 ))}
@@ -437,7 +439,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
         </Card>
         
         <Dialog open={showAccusationModal} onOpenChange={(isOpen) => {
-          if (!isOpen && gameData.gamePhase === 'selectAccused') { // If closed without confirming
+          if (!isOpen && gameData.gamePhase === 'selectAccused') { 
             setGameData(prev => prev ? { ...prev, gamePhase: 'discussionAndClues' } : null);
           }
           setShowAccusationModal(isOpen);
@@ -471,49 +473,6 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        {/* Modal para Sugerencia de Pista */}
-        <Dialog open={showSuggestionModal} onOpenChange={setShowSuggestionModal}>
-            <DialogContent className="sm:max-w-md bg-card shadow-xl rounded-lg border-accent/50">
-                <DialogHeader>
-                    <DialogTitle className="text-2xl text-accent flex items-center gap-2"><Lightbulb /> Sugerencia de Pista IA</DialogTitle>
-                </DialogHeader>
-                <div className="my-4 space-y-3">
-                    {isSuggestingClue && !clueSuggestion && !suggestionError && (
-                        <div className="flex items-center justify-center space-x-2 p-4">
-                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                            <p className="text-muted-foreground">Generando sugerencia...</p>
-                        </div>
-                    )}
-                    {suggestionError && (
-                        <Alert variant="destructive">
-                            <AlertTriangle className="h-4 w-4" />
-                            <AlertTitle>Error de Sugerencia</AlertTitle>
-                            <AlertDescription>{suggestionError}</AlertDescription>
-                        </Alert>
-                    )}
-                    {clueSuggestion && (
-                        <Card className="bg-secondary/30 p-4">
-                            <CardContent className="p-0 space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <p className="text-2xl font-semibold text-primary">{clueSuggestion.clue}</p>
-                                    <Button variant="ghost" size="icon" onClick={() => handleCopySuggestion(clueSuggestion.clue)} className="text-muted-foreground hover:text-accent">
-                                        <Copy className="h-5 w-5" />
-                                    </Button>
-                                </div>
-                                <p className="text-sm text-muted-foreground italic"><strong>Justificación IA:</strong> {clueSuggestion.justification}</p>
-                            </CardContent>
-                        </Card>
-                    )}
-                </div>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant="outline">Cerrar</Button>
-                    </DialogClose>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-
       </div>
     );
   }
@@ -536,13 +495,13 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
         if (mrWhitesWin) {
           winnerMessage = `¡Mr. White (${gameData.mrWhiteNames?.join(', ')}) ha ganado! ${votedPlayer.name} era un Civil.`;
           winnerIcon = <ShieldQuestion className="h-8 w-8 text-destructive" />;
-        } else { // Should not happen if roles are assigned correctly
+        } else { 
            winnerMessage = `¡Vaya! ${votedPlayer.name} era un Civil. No había Mr. White o error en la configuración.`;
            winnerIcon = <HelpCircle className="h-8 w-8 text-muted-foreground" />;
         }
       }
     } else {
-      winnerMessage = "No se registró ningún voto. Error en la partida."; // Fallback
+      winnerMessage = "No se registró ningún voto. Error en la partida."; 
       winnerIcon = <HelpCircle className="h-8 w-8 text-muted-foreground" />;
     }
     
@@ -614,6 +573,12 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                  <p className="text-muted-foreground mt-4 text-center">No hay pistas para rankear o la IA no pudo procesarlas adecuadamente.</p>
                )}
             </div>
+
+            <div className="mt-6 text-center">
+                <Button onClick={handleOpenSuggestionModal} variant="outline" className="border-accent text-accent hover:bg-accent/10 hover:text-accent">
+                    <Lightbulb className="mr-2" /> ¿Cuál habría sido una buena pista? (IA)
+                </Button>
+            </div>
             
             <CardFooter className="p-0 pt-8 flex flex-col sm:flex-row gap-3">
                 <Button onClick={handlePlayAgainSamePlayers} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-lg py-6 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105">
@@ -625,6 +590,73 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
             </CardFooter>
           </CardContent>
         </Card>
+
+        {/* Modal para Sugerencia de Pista Global */}
+        <Dialog open={showSuggestionModal} onOpenChange={setShowSuggestionModal}>
+            <DialogContent className="sm:max-w-md bg-card shadow-xl rounded-lg border-accent/50">
+                <DialogHeader>
+                    <DialogTitle className="text-2xl text-accent flex items-center gap-2"><Lightbulb /> Sugerencia de Pista IA</DialogTitle>
+                    <DialogDescription className="text-muted-foreground mt-1">
+                        Selecciona un rol para obtener una sugerencia de pista basada en la palabra civil de esta partida: <strong className="text-primary">{gameData.civilianWord}</strong>.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="my-4 space-y-4">
+                    <div>
+                        <Label htmlFor="role-suggestion" className="text-sm font-medium text-foreground/90">Sugerir pista para el rol de:</Label>
+                        <Select onValueChange={(value) => setSelectedRoleForSuggestion(value as Player['role'])} value={selectedRoleForSuggestion || undefined}>
+                            <SelectTrigger id="role-suggestion" className="w-full bg-input border-border focus:border-accent focus:ring-accent text-base py-3 mt-1">
+                                <SelectValue placeholder="Selecciona un rol" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover border-border">
+                                <SelectItem value="civilian" className="text-base focus:bg-accent/20">Civil</SelectItem>
+                                <SelectItem value="mrwhite" className="text-base focus:bg-accent/20">Mr. White</SelectItem>
+                                <SelectItem value="payaso" className="text-base focus:bg-accent/20">Payaso</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {isGeneratingSuggestion && (
+                        <div className="flex items-center justify-center space-x-2 p-4">
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                            <p className="text-muted-foreground">Generando sugerencia...</p>
+                        </div>
+                    )}
+                    {suggestionError && (
+                        <Alert variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>Error de Sugerencia</AlertTitle>
+                            <AlertDescription>{suggestionError}</AlertDescription>
+                        </Alert>
+                    )}
+                    {clueSuggestion && (
+                        <Card className="bg-secondary/30 p-4">
+                            <CardContent className="p-0 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-2xl font-semibold text-primary">{clueSuggestion.clue}</p>
+                                    <Button variant="ghost" size="icon" onClick={() => handleCopySuggestion(clueSuggestion.clue)} className="text-muted-foreground hover:text-accent">
+                                        <Copy className="h-5 w-5" />
+                                    </Button>
+                                </div>
+                                <p className="text-sm text-muted-foreground italic"><strong>Justificación IA:</strong> {clueSuggestion.justification}</p>
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
+                <DialogFooter className="sm:justify-between gap-2">
+                    <DialogClose asChild>
+                        <Button variant="outline">Cerrar</Button>
+                    </DialogClose>
+                    <Button 
+                        onClick={handleGenerateSuggestion} 
+                        disabled={isGeneratingSuggestion || !selectedRoleForSuggestion}
+                        className="bg-primary hover:bg-primary/80"
+                    >
+                        {isGeneratingSuggestion ? <Loader2 className="animate-spin"/> : <Lightbulb className="mr-2"/>}
+                        Generar Sugerencia
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -644,5 +676,3 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     </div>
   );
 }
-
-    
