@@ -31,7 +31,7 @@ export default function GameSetup() {
       toast({
         title: "Máximo de Jugadores Alcanzado",
         description: `No puedes tener más de ${MAX_PLAYERS} jugadores.`,
-        variant: "default",
+        variant: "default", // "default" will pick up dark theme styles
       });
     }
   };
@@ -70,8 +70,12 @@ export default function GameSetup() {
     }
 
     try {
-      const { players, civilianWord, mrWhiteName } = initializePlayers(playerNames.map(name => name.trim()));
-      const gameData: GameData = { players, civilianWord, mrWhiteName };
+      const initializedGame = initializePlayers(playerNames.map(name => name.trim()));
+      const gameData: GameData = { 
+        players: initializedGame.players, 
+        civilianWord: initializedGame.civilianWord, 
+        mrWhiteNames: initializedGame.mrWhiteNames 
+      };
       
       localStorage.setItem('mrWhiteGameData', JSON.stringify(gameData));
       router.push('/game');
@@ -86,8 +90,8 @@ export default function GameSetup() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen p-4 bg-gradient-to-br from-background to-secondary">
-      <Card className="w-full max-w-md shadow-2xl">
+    <div className="flex justify-center items-center min-h-screen p-4 bg-gradient-to-br from-background to-card"> {/* Adjusted gradient for dark theme */}
+      <Card className="w-full max-w-md shadow-2xl"> {/* bg-card will use the new dark card color */}
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-primary">El Juego de Mr. White</CardTitle>
           <CardDescription className="text-muted-foreground">Configura tu sesión de juego</CardDescription>
