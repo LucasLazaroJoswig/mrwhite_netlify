@@ -29,8 +29,8 @@ export default function GameSetup() {
       setPlayerNames([...playerNames, '']);
     } else {
       toast({
-        title: "Maximum Players Reached",
-        description: `You cannot have more than ${MAX_PLAYERS} players.`,
+        title: "Máximo de Jugadores Alcanzado",
+        description: `No puedes tener más de ${MAX_PLAYERS} jugadores.`,
         variant: "default",
       });
     }
@@ -41,8 +41,8 @@ export default function GameSetup() {
       setPlayerNames(playerNames.filter((_, index) => index !== indexToRemove));
     } else {
       toast({
-        title: "Minimum Players Required",
-        description: `You need at least ${MIN_PLAYERS} players.`,
+        title: "Mínimo de Jugadores Requerido",
+        description: `Necesitas al menos ${MIN_PLAYERS} jugadores.`,
         variant: "default",
       });
     }
@@ -53,8 +53,8 @@ export default function GameSetup() {
 
     if (playerNames.some(name => name.trim() === '')) {
       toast({
-        title: "Validation Error",
-        description: "All player names must be filled.",
+        title: "Error de Validación",
+        description: "Todos los nombres de los jugadores deben estar completos.",
         variant: "destructive",
       });
       return;
@@ -62,8 +62,8 @@ export default function GameSetup() {
     
     if (new Set(playerNames.map(name => name.trim().toLowerCase())).size !== playerNames.length) {
       toast({
-        title: "Validation Error",
-        description: "Player names must be unique.",
+        title: "Error de Validación",
+        description: "Los nombres de los jugadores deben ser únicos.",
         variant: "destructive",
       });
       return;
@@ -76,9 +76,9 @@ export default function GameSetup() {
       localStorage.setItem('mrWhiteGameData', JSON.stringify(gameData));
       router.push('/game');
     } catch (error) {
-      const message = error instanceof Error ? error.message : "An unknown error occurred";
+      const message = error instanceof Error ? error.message : "Ha ocurrido un error desconocido";
       toast({
-        title: "Game Setup Error",
+        title: "Error al Configurar el Juego",
         description: message,
         variant: "destructive",
       });
@@ -89,26 +89,26 @@ export default function GameSetup() {
     <div className="flex justify-center items-center min-h-screen p-4 bg-gradient-to-br from-background to-secondary">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-primary">Mr. White Game</CardTitle>
-          <CardDescription className="text-muted-foreground">Setup your game session</CardDescription>
+          <CardTitle className="text-3xl font-bold text-primary">El Juego de Mr. White</CardTitle>
+          <CardDescription className="text-muted-foreground">Configura tu sesión de juego</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label className="flex items-center gap-2 text-lg font-medium">
-                <Users className="text-primary h-5 w-5" /> Players ({playerNames.length})
+                <Users className="text-primary h-5 w-5" /> Jugadores ({playerNames.length})
               </Label>
               <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
                 {playerNames.map((name, index) => (
                   <div key={index} className="space-y-1">
-                    <Label htmlFor={`playerName-${index}`}>{`Player ${index + 1} Name`}</Label>
+                    <Label htmlFor={`playerName-${index}`}>{`Nombre del Jugador ${index + 1}`}</Label>
                     <div className="flex items-center gap-2">
                       <Input
                         id={`playerName-${index}`}
                         type="text"
                         value={name}
                         onChange={(e) => handlePlayerNameChange(index, e)}
-                        placeholder={`Enter Player ${index + 1}'s Name`}
+                        placeholder={`Introduce el nombre del Jugador ${index + 1}`}
                         required
                         maxLength={20}
                         className="flex-grow"
@@ -119,7 +119,7 @@ export default function GameSetup() {
                           variant="ghost"
                           size="icon"
                           onClick={() => removePlayer(index)}
-                          aria-label={`Remove Player ${index + 1}`}
+                          aria-label={`Eliminar Jugador ${index + 1}`}
                           className="text-destructive hover:bg-destructive/10 p-2"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -138,13 +138,13 @@ export default function GameSetup() {
                 onClick={addPlayer}
                 className="w-full border-dashed hover:border-primary hover:text-primary"
               >
-                <PlusCircle className="mr-2 h-4 w-4" /> Add Player
+                <PlusCircle className="mr-2 h-4 w-4" /> Añadir Jugador
               </Button>
             )}
             
             <CardFooter className="p-0 pt-4">
               <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-3">
-                <Play className="mr-2 h-5 w-5" /> Start Game
+                <Play className="mr-2 h-5 w-5" /> Empezar Juego
               </Button>
             </CardFooter>
           </form>

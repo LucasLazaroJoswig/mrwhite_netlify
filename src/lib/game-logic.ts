@@ -1,10 +1,10 @@
 import type { Player } from './types';
 
 export const SECRET_WORDS = [
-  "Apple", "Beach", "Car", "Dog", "Sun", "Moon", "Book", "Chair", "House", "River",
-  "Mountain", "Forest", "Cloud", "Star", "Key", "Lock", "Bridge", "Road", "Ship", "Train"
+  "Manzana", "Playa", "Coche", "Perro", "Sol", "Luna", "Libro", "Silla", "Casa", "Río",
+  "Montaña", "Bosque", "Nube", "Estrella", "Llave", "Candado", "Puente", "Camino", "Barco", "Tren"
 ];
-export const MR_WHITE_MESSAGE = "You are Mr. White";
+export const MR_WHITE_MESSAGE = "Eres Mr. White";
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 8;
 
@@ -19,7 +19,7 @@ function shuffleArray<T>(array: T[]): T[] {
 
 export function initializePlayers(playerNames: string[]): { players: Player[], civilianWord: string, mrWhiteName: string } {
   if (playerNames.length < MIN_PLAYERS || playerNames.length > MAX_PLAYERS) {
-    throw new Error(`Number of players must be between ${MIN_PLAYERS} and ${MAX_PLAYERS}.`);
+    throw new Error(`El número de jugadores debe estar entre ${MIN_PLAYERS} y ${MAX_PLAYERS}.`);
   }
 
   const civilianWord = SECRET_WORDS[Math.floor(Math.random() * SECRET_WORDS.length)];
@@ -34,5 +34,7 @@ export function initializePlayers(playerNames: string[]): { players: Player[], c
     wordRevealed: false,
   }));
 
+  // Shuffle players after assignment to ensure random turn order for word reveal
+  // and to make Mr. White's position in the game random.
   return { players: shuffleArray(players), civilianWord, mrWhiteName };
 }

@@ -24,15 +24,15 @@ export default function GamePlayWrapper() {
         if (parsedData && parsedData.players && parsedData.players.length > 0 && parsedData.civilianWord) {
           setGameData(parsedData);
         } else {
-          setError("Invalid game data found. Please start a new game.");
+          setError("Datos de partida inválidos. Por favor, inicia una nueva partida.");
           localStorage.removeItem('mrWhiteGameData');
         }
       } else {
-        setError("No game data found. Please start a new game.");
+        setError("No se encontraron datos de la partida. Por favor, inicia una nueva partida.");
       }
     } catch (e) {
-      console.error("Failed to load game data:", e);
-      setError("Failed to load game data. Please try starting a new game.");
+      console.error("Error al cargar los datos de la partida:", e);
+      setError("Error al cargar los datos de la partida. Por favor, intenta iniciar una nueva partida.");
       localStorage.removeItem('mrWhiteGameData');
     } finally {
       setLoading(false);
@@ -51,7 +51,7 @@ export default function GamePlayWrapper() {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen p-4 space-y-4 text-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="text-lg text-muted-foreground">Loading your game...</p>
+        <p className="text-lg text-muted-foreground">Cargando tu partida...</p>
       </div>
     );
   }
@@ -62,13 +62,13 @@ export default function GamePlayWrapper() {
         <Card className="w-full max-w-md shadow-lg text-center">
           <CardHeader>
             <CardTitle className="text-2xl text-destructive flex items-center justify-center gap-2">
-              <AlertTriangle className="h-8 w-8" /> Error Loading Game
+              <AlertTriangle className="h-8 w-8" /> Error al Cargar la Partida
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground mb-6">{error || "An unexpected error occurred."}</p>
+            <p className="text-muted-foreground mb-6">{error || "Ha ocurrido un error inesperado."}</p>
             <Button onClick={() => router.push('/')} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-              Start New Game
+              Empezar Nueva Partida
             </Button>
           </CardContent>
         </Card>

@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Mr. White Game Manager',
-  description: 'A game to find Mr. White!',
+  title: 'El Juego de Mr. White',
+  description: '¡Un juego para encontrar a Mr. White!',
 };
 
 export default function RootLayout({
@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}>
         {children}
         <Toaster />
