@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ChangeEvent, FormEvent } from 'react';
@@ -7,28 +8,44 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { initializePlayers, MIN_PLAYERS, MAX_PLAYERS } from '@/lib/game-logic';
 import type { GameData } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Play } from 'lucide-react';
+import { Users, Play, PlusCircle, Trash2 } from 'lucide-react';
 
 export default function GameSetup() {
-  const [numPlayers, setNumPlayers] = useState<number>(MIN_PLAYERS);
   const [playerNames, setPlayerNames] = useState<string[]>(Array(MIN_PLAYERS).fill(''));
   const router = useRouter();
   const { toast } = useToast();
-
-  const handleNumPlayersChange = (value: string) => {
-    const count = parseInt(value, 10);
-    setNumPlayers(count);
-    setPlayerNames(Array(count).fill('').map((_, i) => playerNames[i] || ''));
-  };
 
   const handlePlayerNameChange = (index: number, event: ChangeEvent<HTMLInputElement>) => {
     const newPlayerNames = [...playerNames];
     newPlayerNames[index] = event.target.value;
     setPlayerNames(newPlayerNames);
+  };
+
+  const addPlayer = () => {
+    if (playerNames.length < MAX_PLAYERS) {
+      setPlayerNames([...playerNames, '']);
+    } else {
+      toast({
+        title: "Maximum Players Reached",
+        description: `You cannot have more than ${MAX_PLAYERS} players.`,
+        variant: "default",
+      });
+    }
+  };
+
+  const removePlayer = (indexToRemove: number) => {
+    if (playerNames.length > MIN_PLAYERS) {
+      setPlayerNames(playerNames.filter((_, index) => index !== indexToRemove));
+    } else {
+      toast({
+        title: "Minimum Players Required",
+        description: `You need at least ${MIN_PLAYERS} players.`,
+        variant: "default",
+      });
+    }
   };
 
   const handleSubmit = (event: FormEvent) => {
@@ -78,44 +95,56 @@ export default function GameSetup() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="numPlayers" className="flex items-center gap-2">
-                <Users className="text-primary" /> Number of Players
+              <Label className="flex items-center gap-2 text-lg font-medium">
+                <Users className="text-primary h-5 w-5" /> Players ({playerNames.length})
               </Label>
-              <Select
-                value={numPlayers.toString()}
-                onValueChange={handleNumPlayersChange}
-              >
-                <SelectTrigger id="numPlayers" className="w-full">
-                  <SelectValue placeholder="Select number of players" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: MAX_PLAYERS - MIN_PLAYERS + 1 }, (_, i) => MIN_PLAYERS + i).map(count => (
-                    <SelectItem key={count} value={count.toString()}>
-                      {count} Players
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                {playerNames.map((name, index) => (
+                  <div key={index} className="space-y-1">
+                    <Label htmlFor={`playerName-${index}`}>{`Player ${index + 1} Name`}</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id={`playerName-${index}`}
+                        type="text"
+                        value={name}
+                        onChange={(e) => handlePlayerNameChange(index, e)}
+                        placeholder={`Enter Player ${index + 1}'s Name`}
+                        required
+                        maxLength={20}
+                        className="flex-grow"
+                      />
+                      {playerNames.length > MIN_PLAYERS && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removePlayer(index)}
+                          aria-label={`Remove Player ${index + 1}`}
+                          className="text-destructive hover:bg-destructive/10 p-2"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {playerNames.map((name, index) => (
-              <div key={index} className="space-y-2">
-                <Label htmlFor={`playerName-${index}`}>{`Player ${index + 1} Name`}</Label>
-                <Input
-                  id={`playerName-${index}`}
-                  type="text"
-                  value={name}
-                  onChange={(e) => handlePlayerNameChange(index, e)}
-                  placeholder={`Enter Player ${index + 1}'s Name`}
-                  required
-                  maxLength={20}
-                  className="w-full"
-                />
-              </div>
-            ))}
+            {playerNames.length < MAX_PLAYERS && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addPlayer}
+                className="w-full border-dashed hover:border-primary hover:text-primary"
+              >
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Player
+              </Button>
+            )}
+            
             <CardFooter className="p-0 pt-4">
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Play className="mr-2" /> Start Game
+              <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-3">
+                <Play className="mr-2 h-5 w-5" /> Start Game
               </Button>
             </CardFooter>
           </form>

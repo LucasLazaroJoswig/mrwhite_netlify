@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -37,6 +38,14 @@ export default function GamePlayWrapper() {
       setLoading(false);
     }
   }, []);
+
+  // Effect to save gameData to localStorage whenever it changes
+  useEffect(() => {
+    if (gameData && !loading) { // Ensure not to save during initial load if data is null
+      localStorage.setItem('mrWhiteGameData', JSON.stringify(gameData));
+    }
+  }, [gameData, loading]);
+
 
   if (loading) {
     return (

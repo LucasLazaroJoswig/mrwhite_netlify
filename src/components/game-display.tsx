@@ -1,12 +1,13 @@
+
 "use client";
 
 import type { Dispatch, SetStateAction } from 'react';
-import React, { useState } from 'react';
-import type { GameData, Player } from '@/lib/types';
+import React, { useState, useEffect } from 'react';
+import type { GameData } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { List, User, Eye, CheckCircle, Zap, ArrowRightCircle, HelpCircle } from 'lucide-react';
+import { List, User, Eye, CheckCircle, Zap, HelpCircle, MessageSquareText, RotateCcw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,7 +20,14 @@ interface GameDisplayProps {
 export default function GameDisplay({ gameData, setGameData }: GameDisplayProps) {
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [showWordModal, setShowWordModal] = useState(false);
-  const [isGameOver, setIsGameOver] = useState(false);
+  const [allWordsRevealed, setAllWordsRevealed] = useState(false);
+
+  // Check if all words have been revealed initially or when gameData changes
+  useEffect(() => {
+    if (gameData.players.every(p => p.wordRevealed)) {
+      setAllWordsRevealed(true);
+    }
+  }, [gameData.players]);
 
   const currentPlayer = gameData.players[currentPlayerIndex];
 
@@ -34,10 +42,10 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     );
     
     const newGameData = { ...gameData, players: updatedPlayers };
-    setGameData(newGameData); // Update state in parent
+    setGameData(newGameData); // This will trigger save in GamePlayWrapper
 
     if (updatedPlayers.every(p => p.wordRevealed)) {
-      setIsGameOver(true);
+      setAllWordsRevealed(true);
     } else {
       setCurrentPlayerIndex((prevIndex) => (prevIndex + 1) % gameData.players.length);
     }
@@ -48,22 +56,25 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     window.location.href = '/'; // Navigate to setup
   };
 
-
-  if (isGameOver) {
+  if (allWordsRevealed) {
+    const discussionStarter = gameData.players.length > 0 ? gameData.players[0].name : "The first player";
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 space-y-6">
         <Card className="w-full max-w-lg shadow-xl text-center">
           <CardHeader>
             <CardTitle className="text-3xl font-bold text-primary flex items-center justify-center gap-2">
-              <Zap /> All Words Revealed!
+              <MessageSquareText /> Discussion Time!
             </CardTitle>
-            <CardDescription>The game has concluded. Mr. White was <span className="font-semibold text-accent">{gameData.mrWhiteName || 'someone'}</span>.</CardDescription>
+            <CardDescription>
+              All words have been revealed. The discussion begins with <span className="font-semibold text-accent">{discussionStarter}</span>.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-lg mb-2">The civilian word was: <strong className="text-primary">{gameData.civilianWord}</strong></p>
-            <p className="text-muted-foreground">Time to discuss and find Mr. White!</p>
+            <p className="text-lg mb-4">Mr. White was: <strong className="text-accent">{gameData.mrWhiteName || 'someone'}</strong></p>
+            <p className="text-muted-foreground">Players, discuss and try to find Mr. White!</p>
              <Button onClick={handlePlayAgain} className="mt-6 w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-              Play Again
+              <RotateCcw className="mr-2" /> Play Again
             </Button>
           </CardContent>
         </Card>
@@ -150,7 +161,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                 variant="outline" 
                 className="border-destructive text-destructive hover:bg-destructive/10"
               >
-                Restart Game
+                <RotateCcw className="mr-2" /> Restart Game
               </Button>
             </div>
         </CardContent>
