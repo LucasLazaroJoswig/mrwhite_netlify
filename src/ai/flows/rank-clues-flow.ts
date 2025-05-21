@@ -62,10 +62,10 @@ Basa tu ranking en:
 3. Para el Payaso: Qué tan bien su pista le ayuda a lograr su objetivo de ser votado. Esto podría significar dar una pista extraña, engañosa o que parezca de "Mr. White".
 4. Inteligencia general y adhesión al objetivo de su rol.
 
-DEBES proporcionar un ranking y una justificación para la pista de CADA jugador.
-La salida DEBE ser un objeto JSON que coincida estrictamente con el esquema de salida proporcionado.
+IMPORTANTE: Tu respuesta DEBE ser ÚNICAMENTE un objeto JSON válido que coincida estrictamente con el esquema de salida proporcionado. No incluyas ningún texto explicativo antes o después del JSON.
 El objeto JSON DEBE contener una clave llamada "rankedClues". El valor de "rankedClues" DEBE ser un array de objetos, donde cada objeto representa a un jugador y su pista rankeada.
-Incluso si tienes dificultades para rankear, o si no hay pistas significativas, o si hay muy pocos jugadores, DEBES devolver un array vacío para "rankedClues" si es necesario, por ejemplo: {"rankedClues": []}. NUNCA omitas la clave "rankedClues".
+Cada objeto en el array "rankedClues" debe tener los campos: "playerName" (string), "clue" (string), "role" (enum: 'civilian', 'mrwhite', 'payaso'), "rank" (integer), "justification" (string).
+Incluso si tienes dificultades para rankear, o si no hay pistas significativas, o si hay muy pocos jugadores, DEBES devolver un array vacío para "rankedClues" si es necesario, por ejemplo: {"rankedClues": []}. NUNCA omitas la clave "rankedClues" ni devuelvas null para ella.
 Ordena el array "rankedClues" por tu ranking (la mejor pista primero, es decir, rank 1 arriba).
 Considera el contexto de todas las pistas dadas al rankear una pista individual.
 Asegúrate que la respuesta siempre sea un JSON válido que cumpla con el esquema de salida.
@@ -78,7 +78,8 @@ const rankCluesFlow = ai.defineFlow(
     outputSchema: RankCluesOutputSchema,
   },
   async (input) => {
-    const { output, usage } = await ai.generate({
+    const modelName = 'googleai/gemini-2.0-flash'; // O el modelo que estés usando
+    const { output, usage, error } = await ai.generate({
       prompt: `${rankCluesSystemPrompt}
 
 Palabra Civil: {{{civilianWord}}}
@@ -89,35 +90,46 @@ Jugadores y Pistas:
 {{/each}}
 
 Proporciona tu ranking como un objeto JSON que coincida con el esquema de salida. Rankea a todos los jugadores.`,
-      model: 'googleai/gemini-2.0-flash',
+      model: modelName,
       output: { schema: RankCluesOutputSchema },
       config: {
-        temperature: 0.2, // Reducir para respuestas JSON más consistentes
+        temperature: 0.2, 
       }
     });
 
-    // console.log('AI Usage for rankCluesFlow:', usage); // Descomentar para depurar uso
-    // console.log('Raw AI output for rankCluesFlow:', JSON.stringify(output, null, 2)); // Descomentar para depurar salida
-
+    if (error) {
+      console.error(`Error from AI model (${modelName}) during rankCluesFlow:`, error);
+      console.error('Input to AI that caused error:', JSON.stringify(input, null, 2));
+      console.error('Usage data (if available):', JSON.stringify(usage, null, 2));
+      throw new Error(`Error de la IA al procesar la solicitud: ${error.message || 'Error desconocido'}`);
+    }
+    
     if (!output) {
-      console.error('AI response was null or undefined after parsing. Model might have returned non-JSON or an error. Input to AI:', JSON.stringify(input, null, 2));
-      throw new Error('La IA no devolvió una respuesta JSON parseable o la respuesta fue nula.');
+      console.error(
+        `AI response was null or undefined after Zod parsing for model ${modelName}. This likely means the model returned non-JSON or JSON that did not match the expected schema.`
+      );
+      console.error('Input to AI:', JSON.stringify(input, null, 2));
+      console.error('Usage data (if available):', JSON.stringify(usage, null, 2));
+      throw new Error('La IA no devolvió una respuesta JSON parseable que coincida con el esquema esperado.');
     }
     
-    // La validación de esquema Zod ya asegura que output.rankedClues es un array si output es válido.
-    // Si output.rankedClues fuera undefined pero output sí existiera, el parseo de Zod habría fallado antes
-    // y output sería null/undefined.
-    // Por lo tanto, si llegamos aquí, output y output.rankedClues deberían estar definidos.
-    // Permitimos que output.rankedClues sea un array vacío según el prompt.
-
-    if (!output.rankedClues) { // Esta comprobación es redundante si el esquema Zod se aplica correctamente.
-                           // Pero la dejamos como una salvaguarda por si Zod no lanza error y aun asi es null.
-      console.error('AI response was parsed, but rankedClues is missing or null. Full AI output object:', JSON.stringify(output, null, 2));
-      throw new Error('La IA devolvió una respuesta, pero le faltaba el campo `rankedClues` o este era nulo.');
+    // Si output.rankedClues es undefined o null (aunque Zod debería prevenir esto si el parseo fue exitoso),
+    // pero el prompt exige que sea un array, incluso vacío.
+    if (!Array.isArray(output.rankedClues)) {
+        console.error(
+            `AI response was parsed, but rankedClues is not an array for model ${modelName}. Received:`, output.rankedClues
+        );
+        console.error('Full AI output object:', JSON.stringify(output, null, 2));
+        console.error('Input to AI:', JSON.stringify(input, null, 2));
+        console.error('Usage data (if available):', JSON.stringify(usage, null, 2));
+        // Forzar un array vacío si el prompt no fue seguido, para evitar errores posteriores,
+        // aunque idealmente la IA debería cumplir. O lanzar un error.
+        // Por ahora, lanzaremos error para ser estrictos.
+        throw new Error('La IA devolvió una respuesta donde `rankedClues` no era un array, según lo esperado.');
     }
     
-    // Asegurar el orden por rank, aunque el modelo debería hacerlo.
     output.rankedClues.sort((a, b) => a.rank - b.rank);
     return output;
   }
 );
+
