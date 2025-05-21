@@ -11,42 +11,52 @@ export const SECRET_WORDS = [
   // Animales
   "León", "Tigre", "Elefante", "Jirafa", "Cebra", "Caballo", "Vaca", "Oveja", "Cerdo", "Pollo",
   "Pato", "Pavo", "Águila", "Halcón", "Búho", "Loro", "Pingüino", "Delfín", "Ballena", "Tiburón",
-  "Pulpo", "Cangrejo", "Serpiente", "Lagarto", "Tortuga", "Rana", "Mariposa", "Abeja", "Hormiga", "Araña",
+  "Pulpo", "Cangrejo", "Serpiente", "Lagarto", "Tortuga", "Rana", "Mariposa", "Abeja", "Hormiga", "Araña", "Murciélago", "Ardilla",
   // Comida y Bebida
   "Naranja", "Plátano", "Uva", "Fresa", "Sandía", "Melón", "Piña", "Mango", "Kiwi", "Cereza",
   "Limón", "Tomate", "Patata", "Cebolla", "Ajo", "Zanahoria", "Lechuga", "Pepino", "Pimiento", "Brócoli",
   "Arroz", "Pasta", "Pan", "Queso", "Huevo", "Leche", "Yogur", "Mantequilla", "Aceite", "Vinagre",
-  "Sal", "Azúcar", "Pimienta", "Café", "Té", "Zumo", "Agua", "Vino", "Cerveza", "Chocolate",
+  "Sal", "Azúcar", "Pimienta", "Café", "Té", "Zumo", "Agua", "Vino", "Cerveza", "Chocolate", "Galleta", "Helado", "Miel",
   // Objetos Caseros
   "Sofá", "Cama", "Armario", "Espejo", "Lámpara", "Alfombra", "Cortina", "Cojín", "Escritorio", "Estantería",
   "Ordenador", "Televisión", "Teléfono", "Radio", "Nevera", "Horno", "Microondas", "Lavadora", "Aspiradora", "Plancha",
+  "Escoba", "Fregona", "Jarrón", "Cuadro", "Toalla", "Jabón", "Cepillo",
   // Naturaleza y Geografía
   "Volcán", "Desierto", "Isla", "Océano", "Mar", "Lago", "Glaciar", "Valle", "Colina", "Cueva",
   "Árbol", "Hoja", "Raíz", "Semilla", "Hierba", "Piedra", "Arena", "Tierra", "Fuego", "Viento",
   "Lluvia", "Nieve", "Hielo", "Trueno", "Rayo", "Arcoíris", "Amanecer", "Atardecer", "Invierno", "Verano",
-  "Otoño", "Primavera", "Continente", "País", "Ciudad", "Pueblo",
+  "Otoño", "Primavera", "Continente", "País", "Ciudad", "Pueblo", "Selva", "Pantano", "Catarata",
   // Herramientas y Transporte
   "Martillo", "Destornillador", "Sierra", "Clavo", "Tornillo", "Taladro", "Escalera", "Pincel", "Rodillo", "Tijeras",
   "Bicicleta", "Motocicleta", "Autobús", "Camión", "Helicóptero", "Globo", "Cohete", "Submarino", "Canoa", "Monopatín",
+  "Patin", "Yate", "Furgoneta",
   // Ropa y Accesorios (más)
   "Cinturón", "Gorra", "Bikini", "Bañador", "Pijama", "Bata", "Zapatillas", "Botas", "Sandalias", "Joyas",
+  "Medias", "Corbata", "Pajarita", "Traje", "Chaqueta",
   // Lugares
   "Aeropuerto", "Estación", "Hospital", "Biblioteca", "Museo", "Teatro", "Cine", "Restaurante", "Hotel", "Gimnasio",
   "Parque", "Zoológico", "Circo", "Universidad", "Oficina", "Fábrica", "Tienda", "Mercado", "Iglesia", "Castillo",
+  "Farmacia", "Banco", "Supermercado", "Plaza", "Estadio",
   // Profesiones (sustantivos relacionados)
   "Pizarra", "Libreta", "Maletín", "Bisturí", "Estetoscopio", "Casco", "Escudo", "Micrófono", "Cámara", "Partitura",
+  "Pincel", "Paleta", "Escenario", "Tribunal", "Herramienta",
   // Deportes (equipamiento)
   "Balón", "Raqueta", "Red", "Guantes de boxeo", "Patinetes", "Esquís", "Canasta", "Portería", "Bate", "Palo de golf",
+  "Diana", "Dardos", "Casco deportivo", "Protector bucal",
   // Instrumentos Musicales
   "Guitarra", "Piano", "Violín", "Batería", "Flauta", "Trompeta", "Saxofón", "Tambor", "Arpa", "Acordeón",
+  "Violonchelo", "Contrabajo", "Ukelele", "Gaita",
   // Abstractos (pocos y simples)
   "Sueño", "Idea", "Risa", "Juego", "Fiesta", "Música", "Silencio", "Amor", "Paz", "Guerra",
+  "Suerte", "Miedo", "Alegría", "Tristeza", "Tiempo",
   // Misceláneos
-  "Bandera", "Mapa", "Tesoro", "Regalo", "Foto", "Carta", "Periódico", "Revista", "Dinero", "Billete"
+  "Bandera", "Mapa", "Tesoro", "Regalo", "Foto", "Carta", "Periódico", "Revista", "Dinero", "Billete",
+  "Moneda", "Semáforo", "Señal", "Fantasma", "Robot", "Dragón", "Unicornio", "Espada", "Escudo", "Varita",
+  "Poción", "Corona", "Trineo", "Pirámide", "Estatua", "Fuente", "Ducha", "Bañera", "Bolsa", "Mochila",
+  " Paraguas", "Caja", "Botella", "Lata", "Dado", "Ficha", "Peonza", "Cometa", "Puzzle", "Bomba"
 ];
 
 export const MR_WHITE_MESSAGE = "Eres Mr. White";
-export const PAYASO_MESSAGE_PREFIX = "Eres el Payaso. Tu palabra es"; // Se completará con la palabra civil
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 16;
 
@@ -70,40 +80,56 @@ export function initializePlayers(
   let availableWords = SECRET_WORDS;
   if (previousCivilianWord) {
     availableWords = SECRET_WORDS.filter(word => word !== previousCivilianWord);
-    if (availableWords.length === 0) {
+    if (availableWords.length === 0) { // Fallback if all words were used (unlikely with a large list)
       availableWords = SECRET_WORDS;
     }
   }
-  
+
   const civilianWord = availableWords[Math.floor(Math.random() * availableWords.length)];
-  
-  let numberOfMrWhites = 1;
-  if (playerNames.length >= 14) numberOfMrWhites = 4;
-  else if (playerNames.length >= 10) numberOfMrWhites = 3;
-  else if (playerNames.length >= 6) numberOfMrWhites = 2;
+
+  let numberOfMrWhites = 0;
+  let includePayaso = false;
+
+  // Nueva distribución de roles
+  if (playerNames.length >= 3 && playerNames.length <= 7) {
+    numberOfMrWhites = 1;
+    includePayaso = false;
+  } else if (playerNames.length >= 8 && playerNames.length <= 11) {
+    numberOfMrWhites = 1;
+    includePayaso = true;
+  } else if (playerNames.length >= 12 && playerNames.length <= MAX_PLAYERS) {
+    numberOfMrWhites = 2;
+    includePayaso = true;
+  }
+
 
   const playerIndices = Array.from(Array(playerNames.length).keys());
   let shuffledPlayerIndices = shuffleArray(playerIndices);
 
   const mrWhiteIndices = new Set<number>();
+  // Asignar Mr. Whites primero
   for (let i = 0; i < numberOfMrWhites; i++) {
-    mrWhiteIndices.add(shuffledPlayerIndices[i]);
+    if (shuffledPlayerIndices.length > 0) {
+        const assignedIndex = shuffledPlayerIndices.shift(); // Take from the front and remove
+        if (assignedIndex !== undefined) {
+            mrWhiteIndices.add(assignedIndex);
+        }
+    }
   }
 
   let payasoIndex: number | undefined = undefined;
   let payasoName: string | undefined = undefined;
 
-  if (playerNames.length >= 7) {
-    const potentialPayasoIndices = shuffledPlayerIndices.filter(index => !mrWhiteIndices.has(index));
-    if (potentialPayasoIndices.length > 0) {
-      payasoIndex = potentialPayasoIndices[Math.floor(Math.random() * potentialPayasoIndices.length)];
-    }
+  // Asignar Payaso si corresponde, de los índices restantes
+  if (includePayaso && shuffledPlayerIndices.length > 0) {
+    payasoIndex = shuffledPlayerIndices.shift(); // Take from the front and remove
   }
 
+
   const mrWhiteNamesList: string[] = [];
-  const players: Player[] = playerNames.map((name, index) => {
-    const isMrWhite = mrWhiteIndices.has(index);
-    const isPayaso = index === payasoIndex;
+  const players: Player[] = playerNames.map((name, originalIndex) => {
+    const isMrWhite = mrWhiteIndices.has(originalIndex);
+    const isPayaso = originalIndex === payasoIndex;
     let role: 'civilian' | 'mrwhite' | 'payaso' = 'civilian';
     let word = civilianWord;
 
@@ -118,18 +144,21 @@ export function initializePlayers(
     }
 
     return {
-      id: `${name.replace(/\s+/g, '-')}-${index}-${Date.now()}`,
+      id: `${name.replace(/\s+/g, '-')}-${originalIndex}-${Date.now()}`,
       name,
       word,
-      isMrWhite: role === 'mrwhite', // Para compatibilidad o lógica simple
+      isMrWhite: role === 'mrwhite',
       role,
       wordRevealed: false,
-      clue: '', // Inicializar clue
+      clue: '',
     };
   });
 
+  // Re-shuffle players for game order AFTER roles are assigned
+  const finalShuffledPlayers = shuffleArray(players);
+
   return {
-    players: shuffleArray(players), // Barajar el orden de juego final
+    players: finalShuffledPlayers,
     civilianWord,
     mrWhiteNames: mrWhiteNamesList,
     payasoName,

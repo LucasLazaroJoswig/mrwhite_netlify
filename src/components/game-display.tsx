@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { List, User, Eye, CheckCircle, HelpCircle, RotateCcw, Sparkles, Settings2, UsersRound, Brain, Mic2, Send, Vote as VoteIcon, VenetianMask, ShieldQuestion, Users, Shuffle, Lightbulb, Copy, Loader2, AlertTriangle } from 'lucide-react';
+import { List, User, Eye, CheckCircle, HelpCircle, RotateCcw, Sparkles, Settings2, UsersRound, Brain, Mic2, Send, Vote as VoteIcon, VenetianMask, ShieldQuestion, Users, Shuffle, Lightbulb, Copy, Loader2, AlertTriangle, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -30,8 +30,8 @@ interface GameDisplayProps {
 
 const GameLogo = () => (
   <div className="text-center mb-4">
-    <h1 className="text-3xl font-bold text-primary flex items-center justify-center">
-      <Shuffle className="w-8 h-8 mr-2 text-accent" />
+    <h1 className="text-3xl sm:text-4xl font-bold text-primary flex items-center justify-center">
+      <Shuffle className="w-8 h-8 sm:w-10 sm:h-10 mr-2 text-accent" />
       Mr. White
       <span className="text-foreground/80 ml-1.5">Game Manager</span>
     </h1>
@@ -39,27 +39,27 @@ const GameLogo = () => (
 );
 
 const RoleImage = ({ role, altText, className }: { role: Player['role'], altText: string, className?: string }) => {
-  let src = "https://placehold.co/150x150.png?text=Rol";
+  let src = "https://placehold.co/100x100/455A64/FFFFFF.png?text=Rol"; // Default placeholder
   let hint = "question mark";
   if (role === 'civilian') {
-    src = "https://placehold.co/150x150/78909C/FFFFFF.png?text=Civil";
+    src = "https://placehold.co/100x100/78909C/FFFFFF.png?text=Civil";
     hint = "group people";
   } else if (role === 'mrwhite') {
-    src = "https://placehold.co/150x150/263238/FFFFFF.png?text=Mr.W";
+    src = "https://placehold.co/100x100/263238/FFFFFF.png?text=Mr.W";
     hint = "detective mystery";
   } else if (role === 'payaso') {
-    src = "https://placehold.co/150x150/FF8F00/FFFFFF.png?text=Payaso";
+    src = "https://placehold.co/100x100/FF8F00/FFFFFF.png?text=Payaso";
     hint = "clown mask";
   }
 
   return (
-    <Image 
-      src={src} 
-      alt={altText} 
-      width={100} 
-      height={100} 
+    <Image
+      src={src}
+      alt={altText}
+      width={80}
+      height={80}
       data-ai-hint={hint}
-      className={className ? className : "rounded-lg mx-auto mb-3 shadow-md"}
+      className={className ? className : "rounded-lg mx-auto mb-2 shadow-md"}
     />
   );
 };
@@ -69,17 +69,17 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [playerForModal, setPlayerForModal] = useState<Player | null>(null);
   const [showWordModal, setShowWordModal] = useState(false);
-  
+
   const [playerCluesLocal, setPlayerCluesLocal] = useState<{ [playerId: string]: string }>(gameData.playerClues || {});
   const [showAccusationModal, setShowAccusationModal] = useState(false);
   const [selectedAccusationTargetId, setSelectedAccusationTargetId] = useState<string | null>(null);
-  
+
   const [isRankingLoading, setIsRankingLoading] = useState(false);
   const [rankingError, setRankingError] = useState<string | null>(null);
 
   const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
   const [showSuggestionModal, setShowSuggestionModal] = useState(false);
-  const [clueSuggestion, setClueSuggestion] = useState<{ clue: string, justification: string } | null>(null);
+  const [clueSuggestion, setClueSuggestion] = useState<{ suggestedClue: string, justification: string } | null>(null);
   const [suggestionError, setSuggestionError] = useState<string | null>(null);
   const [selectedRoleForSuggestion, setSelectedRoleForSuggestion] = useState<Player['role'] | null>(null);
 
@@ -96,7 +96,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
       setGameData(prev => prev ? ({ ...prev, gamePhase: 'discussionAndClues' }) : null);
     }
   }, [gameData.players, allPlayersWordRevealed, gameData.gamePhase, setGameData]);
-  
+
   useEffect(() => {
     if (gameData.playerClues) {
       setPlayerCluesLocal(gameData.playerClues);
@@ -122,7 +122,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
       const playersForAI = gameData.players.map(p => ({
         name: p.name,
         role: p.role,
-        clue: gameData.playerClues![p.id] || "" 
+        clue: gameData.playerClues![p.id] || ""
       }));
       const rankedOutput = await rankClues({
         civilianWord: gameData.civilianWord,
@@ -133,10 +133,15 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
       console.error("Error ranking clues:", err);
       const errorMessage = err instanceof Error ? err.message : "Error desconocido al rankear pistas.";
       setRankingError(`Error al obtener el ranking de pistas de la IA. ${errorMessage}`);
+      toast({
+        variant: "destructive",
+        title: "Error de Ranking IA",
+        description: errorMessage,
+      });
     } finally {
       setIsRankingLoading(false);
     }
-  }, [gameData, setGameData, isRankingLoading]);
+  }, [gameData, setGameData, isRankingLoading, toast]);
 
   useEffect(() => {
     if (gameData?.gamePhase === 'results' && gameData.votedPlayerId && gameData.playerClues && !gameData.clueRanking && !isRankingLoading && !rankingError) {
@@ -146,7 +151,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
 
   const currentPlayer: Player | undefined = !allPlayersWordRevealed && gameData.players.length > currentPlayerIndex && gameData.gamePhase === 'wordReveal'
-    ? gameData.players[currentPlayerIndex] 
+    ? gameData.players[currentPlayerIndex]
     : undefined;
 
   const handleRevealWord = () => {
@@ -161,15 +166,15 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     const updatedPlayers = gameData.players.map((p) =>
       p.id === playerForModal.id ? { ...p, wordRevealed: true } : p
     );
-    
+
     setGameData(prev => prev ? { ...prev, players: updatedPlayers } : null);
-    setShowWordModal(false); 
+    setShowWordModal(false);
     // playerForModal will be cleared by onOpenChange of Dialog
   };
-  
+
   const handleStartNewGameSetup = () => {
     localStorage.removeItem('mrWhiteGameData');
-    window.location.href = '/'; 
+    window.location.href = '/';
   };
 
   const handlePlayAgainSamePlayers = () => {
@@ -183,6 +188,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     setClueSuggestion(null);
     setSuggestionError(null);
     setSelectedRoleForSuggestion(null);
+    toast({ title: "Nueva Partida", description: "Se ha reiniciado el juego con los mismos jugadores." });
   };
 
   const handleClueChange = (playerId: string, value: string) => {
@@ -195,12 +201,12 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
   const handleConfirmAccusation = () => {
     if (!selectedAccusationTargetId) return;
-    setGameData(prev => prev ? ({ 
-      ...prev, 
-      votedPlayerId: selectedAccusationTargetId, 
-      gamePhase: 'results' 
+    setGameData(prev => prev ? ({
+      ...prev,
+      votedPlayerId: selectedAccusationTargetId,
+      gamePhase: 'results'
     }) : null);
-    setSelectedAccusationTargetId(null); 
+    setSelectedAccusationTargetId(null);
   };
 
   const handleOpenSuggestionModal = () => {
@@ -209,7 +215,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     setSelectedRoleForSuggestion(null);
     setShowSuggestionModal(true);
   };
-  
+
   const handleGenerateSuggestion = async () => {
     if (!selectedRoleForSuggestion) {
       setSuggestionError("Por favor, selecciona un rol para la sugerencia.");
@@ -228,6 +234,11 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
       console.error("Error suggesting clue:", err);
       const errorMessage = err instanceof Error ? err.message : "Error desconocido al sugerir pista.";
       setSuggestionError(`Error al obtener sugerencia: ${errorMessage}`);
+      toast({
+        variant: "destructive",
+        title: "Error de Sugerencia IA",
+        description: errorMessage,
+      });
     } finally {
       setIsGeneratingSuggestion(false);
     }
@@ -235,9 +246,9 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
   const handleCopySuggestion = (clue: string) => {
     navigator.clipboard.writeText(clue).then(() => {
-      toast({ title: "Pista copiada", description: `"${clue}" copiada al portapapeles.`});
+      toast({ title: "Pista copiada", description: `"${clue}" copiada al portapapeles.` });
     }).catch(err => {
-      toast({ variant: "destructive", title: "Error al copiar", description: "No se pudo copiar la pista."});
+      toast({ variant: "destructive", title: "Error al copiar", description: "No se pudo copiar la pista." });
     });
   };
 
@@ -257,7 +268,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <Card className="w-full max-w-md shadow-xl text-center bg-card border-primary/30">
             <CardHeader><GameLogo /><CardTitle className="text-primary text-2xl">Preparando Siguiente Fase...</CardTitle></CardHeader>
-            <CardContent><p className="text-muted-foreground">Todos los jugadores han visto sus roles.</p></CardContent>
+            <CardContent><p className="text-muted-foreground">Todos los jugadores han visto sus roles.</p><Loader2 className="mx-auto mt-4 h-8 w-8 animate-spin text-primary" /></CardContent>
           </Card>
         </div>
       );
@@ -268,99 +279,100 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
           <Card className="w-full max-w-md shadow-xl text-center bg-card border-destructive/50">
             <CardHeader><GameLogo /><CardTitle className="text-destructive text-2xl">Error de Sincronización</CardTitle></CardHeader>
             <CardContent>
-                <p className="text-muted-foreground mb-4">Ocurrió un problema al determinar el jugador actual. Intenta recargar o iniciar una nueva partida.</p>
-                <Button onClick={handleStartNewGameSetup} className="mt-4 bg-primary hover:bg-primary/90">Ir a Configuración</Button>
+              <p className="text-muted-foreground mb-4">Ocurrió un problema al determinar el jugador actual. Intenta recargar o iniciar una nueva partida.</p>
+              <Button onClick={handleStartNewGameSetup} className="mt-4 bg-primary hover:bg-primary/90">Ir a Configuración</Button>
             </CardContent>
           </Card>
         </div>
       );
     }
-    
+
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 space-y-6">
-        <Card className="w-full max-w-2xl shadow-2xl bg-card border-primary/30">
+        <Card className="w-full max-w-md sm:max-w-lg md:max-w-xl shadow-2xl bg-card border-primary/30">
           <CardHeader className="text-center pb-4">
             <GameLogo />
-            <CardTitle className="text-3xl font-semibold text-foreground">Fase de Revelación</CardTitle>
-            <CardDescription className="text-muted-foreground">
+            <CardTitle className="text-2xl sm:text-3xl font-semibold text-foreground">Fase de Revelación</CardTitle>
+            <CardDescription className="text-muted-foreground text-sm sm:text-base">
               Cada jugador debe ver su rol y palabra en secreto.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {currentPlayer && (
               <Alert variant="default" className="mb-6 bg-secondary/50 border-secondary rounded-lg">
-                <ShieldQuestion className="h-6 w-6 text-accent" />
-                <AlertTitle className="font-semibold text-xl text-accent">Turno de: {currentPlayer.name}</AlertTitle>
-                <AlertDescription className="text-foreground/80">
+                <ShieldQuestion className="h-5 w-5 sm:h-6 sm:w-6 text-accent" />
+                <AlertTitle className="font-semibold text-lg sm:text-xl text-accent">Turno de: {currentPlayer.name}</AlertTitle>
+                <AlertDescription className="text-foreground/80 text-sm sm:text-base">
                   ¡Es tu turno, {currentPlayer.name}! Haz clic abajo para descubrir tu identidad secreta. Asegúrate de que nadie más mire.
                 </AlertDescription>
               </Alert>
             )}
             <div className="text-center mb-6">
-              <Button 
-                onClick={handleRevealWord} 
+              <Button
+                onClick={handleRevealWord}
                 disabled={!currentPlayer}
-                className="bg-accent hover:bg-accent/90 text-accent-foreground text-lg px-10 py-7 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="bg-accent hover:bg-accent/90 text-accent-foreground text-md sm:text-lg px-8 sm:px-10 py-5 sm:py-7 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105"
+                aria-label="Revelar mi rol y palabra"
               >
-                <Eye className="mr-2 h-6 w-6" /> Revelar Mi Rol y Palabra
+                <Eye className="mr-2 h-5 w-5 sm:h-6 sm:w-6" /> Revelar Mi Rol y Palabra
               </Button>
             </div>
 
-            <Dialog open={showWordModal} onOpenChange={(isOpen) => { 
-                setShowWordModal(isOpen); 
-                if (!isOpen) setTimeout(() => setPlayerForModal(null), 300);
-              }}>
-              <DialogContent className="sm:max-w-lg bg-card shadow-2xl rounded-lg border-primary/50">
+            <Dialog open={showWordModal} onOpenChange={(isOpen) => {
+              setShowWordModal(isOpen);
+              if (!isOpen) setTimeout(() => setPlayerForModal(null), 300); // Delay to allow animation
+            }}>
+              <DialogContent className="sm:max-w-md bg-card shadow-2xl rounded-lg border-primary/50">
                 {playerForModal && (
                   <>
                     <DialogHeader className="text-center">
                       <RoleImage role={playerForModal.role} altText={getRoleDisplayName(playerForModal.role)} />
-                      <DialogTitle className="text-3xl text-primary">
-                        {playerForModal.role === 'payaso' ? `¡Eres el Payaso, ${playerForModal.name}!` : 
-                         playerForModal.role === 'mrwhite' ? `Tu Identidad Secreta, ${playerForModal.name}` : 
-                         `Tu Palabra Secreta, ${playerForModal.name}`}
+                      <DialogTitle className="text-2xl sm:text-3xl text-primary">
+                        {playerForModal.role === 'payaso' ? `¡Eres el Payaso, ${playerForModal.name}!` :
+                          playerForModal.role === 'mrwhite' ? `Tu Identidad Secreta, ${playerForModal.name}` :
+                            `Tu Palabra Secreta, ${playerForModal.name}`}
                       </DialogTitle>
-                      <DialogDescription className="text-muted-foreground text-base mt-1">
-                        {playerForModal.role === 'payaso' ? `Tu objetivo: ¡que te voten como si fueras Mr. White! Tu palabra civil es:` : 
-                         playerForModal.role === 'mrwhite' ? `No conoces la palabra civil. ¡Descúbrela y que no te pillen!` : 
-                         `Memoriza esta palabra. ¡Es la clave!`}
+                      <DialogDescription className="text-muted-foreground text-sm sm:text-base mt-1">
+                        {playerForModal.role === 'payaso' ? `Tu objetivo: ¡que te voten como si fueras Mr. White! Tu palabra civil es:` :
+                          playerForModal.role === 'mrwhite' ? `No conoces la palabra civil. ¡Descúbrela y que no te pillen!` :
+                            `Memoriza esta palabra. ¡Es la clave!`}
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="my-6 p-6 bg-secondary/40 rounded-md text-center">
-                      <p className={`text-4xl font-bold ${playerForModal?.role === 'mrwhite' ? 'text-destructive' : (playerForModal?.role === 'payaso' ? 'text-orange-400' : 'text-accent')}`}>
-                        {playerForModal.role === 'payaso' ? playerForModal.word : 
-                         (playerForModal.role === 'mrwhite' ? MR_WHITE_MESSAGE : playerForModal.word)}
+                    <div className="my-4 sm:my-6 p-4 sm:p-6 bg-secondary/40 rounded-md text-center">
+                      <p className={`text-3xl sm:text-4xl font-bold ${playerForModal?.role === 'mrwhite' ? 'text-destructive' : (playerForModal?.role === 'payaso' ? 'text-orange-400' : 'text-accent')}`}>
+                        {playerForModal.role === 'payaso' ? playerForModal.word :
+                          (playerForModal.role === 'mrwhite' ? MR_WHITE_MESSAGE : playerForModal.word)}
                       </p>
                     </div>
                     <DialogFooter className="sm:justify-center">
-                      <Button onClick={handleWordSeen} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-3">
+                      <Button onClick={handleWordSeen} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-md sm:text-lg py-3">
                         <CheckCircle className="mr-2" /> ¡Entendido!
                       </Button>
                     </DialogFooter>
                   </>
                 )}
-                {!playerForModal && <p className="text-center text-muted-foreground p-8">Cargando información del jugador...</p>}
+                {!playerForModal && <div className="p-8 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" /><p className="text-muted-foreground mt-2">Cargando...</p></div>}
               </DialogContent>
             </Dialog>
 
             <Card className="mt-8 bg-secondary/20 border-border">
               <CardHeader className="pb-3">
-                <CardTitle className="text-xl flex items-center gap-2 text-primary"><List /> Jugadores en Espera ({gameData.players.filter(p => !p.wordRevealed).length})</CardTitle>
+                <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-primary"><List /> Jugadores en Espera ({gameData.players.filter(p => !p.wordRevealed).length})</CardTitle>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-48">
-                  <ul className="space-y-2.5">
+                <ScrollArea className="h-40 sm:h-48">
+                  <ul className="space-y-2">
                     {gameData.players.map((player) => (
-                      <li key={player.id} 
-                          className={`flex items-center justify-between p-3 rounded-md transition-all duration-300 ease-in-out 
-                                      ${player.id === currentPlayer?.id && !player.wordRevealed ? 'bg-accent/20 ring-2 ring-accent shadow-lg' : 'bg-card/50'} 
-                                      ${player.wordRevealed ? 'opacity-50 line-through' : ''}`}>
-                        <div className="flex items-center gap-3">
-                          <User className={`h-5 w-5 ${player.id === currentPlayer?.id && !player.wordRevealed ? 'text-accent' : 'text-primary'}`} />
-                          <span className="font-medium text-foreground/90">{player.name}</span>
-                          {player.id === currentPlayer?.id && !player.wordRevealed && <Badge variant="default" className="bg-accent text-accent-foreground ml-2 animate-pulse text-xs">ES TU TURNO</Badge>}
+                      <li key={player.id}
+                        className={`flex items-center justify-between p-2.5 sm:p-3 rounded-md transition-all duration-300 ease-in-out
+                                      ${player.id === currentPlayer?.id && !player.wordRevealed ? 'bg-accent/20 ring-2 ring-accent shadow-lg' : 'bg-card/50'}
+                                      ${player.wordRevealed ? 'opacity-50 ' : ''}`}> {/* Removed line-through for better readability */}
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <User className={`h-4 w-4 sm:h-5 sm:w-5 ${player.id === currentPlayer?.id && !player.wordRevealed ? 'text-accent' : 'text-primary'}`} />
+                          <span className={`font-medium text-foreground/90 text-sm sm:text-base ${player.wordRevealed ? 'line-through' : ''}`}>{player.name}</span>
+                          {player.id === currentPlayer?.id && !player.wordRevealed && <Badge variant="default" className="bg-accent text-accent-foreground ml-2 animate-pulse text-xs px-1.5 py-0.5">ES TU TURNO</Badge>}
                         </div>
-                        {player.wordRevealed ? <Badge variant="outline" className="text-green-400 border-green-600 bg-green-900/30 text-xs"><CheckCircle className="mr-1 h-3 w-3" /> Visto</Badge> : <Badge variant="outline" className="text-muted-foreground border-muted-foreground/50 text-xs">Pendiente...</Badge>}
+                        {player.wordRevealed ? <Badge variant="outline" className="text-green-400 border-green-600 bg-green-900/30 text-xs px-1.5 py-0.5"><CheckCircle className="mr-1 h-3 w-3" /> Visto</Badge> : <Badge variant="outline" className="text-muted-foreground border-muted-foreground/50 text-xs px-1.5 py-0.5">Pendiente</Badge>}
                       </li>
                     ))}
                   </ul>
@@ -368,9 +380,9 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
               </CardContent>
             </Card>
             <div className="mt-8 text-center">
-                <Button onClick={handleStartNewGameSetup} variant="outline" className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive">
-                  <Settings2 className="mr-2" /> Nueva Configuración
-                </Button>
+              <Button onClick={handleStartNewGameSetup} variant="outline" className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive text-sm sm:text-base">
+                <Settings2 className="mr-2" /> Nueva Configuración
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -384,34 +396,34 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     const allCluesFilled = gameData.players.every(p => playerCluesLocal[p.id] && playerCluesLocal[p.id].trim() !== '');
 
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 space-y-6">
-        <Card className="w-full max-w-3xl shadow-2xl bg-card border-primary/30">
+      <div className="flex flex-col items-center justify-start min-h-screen p-4 pt-8 sm:pt-12 space-y-6">
+        <Card className="w-full max-w-lg sm:max-w-xl md:max-w-2xl shadow-2xl bg-card border-primary/30">
           <CardHeader className="text-center pb-4">
             <GameLogo />
-            <CardTitle className="text-3xl font-semibold text-foreground flex items-center justify-center gap-2">
+            <CardTitle className="text-2xl sm:text-3xl font-semibold text-foreground flex items-center justify-center gap-2">
               <Mic2 /> ¡A Debatir y Dar Pistas!
             </CardTitle>
-            <CardDescription className="text-muted-foreground mt-1">
-              Todos han visto su rol. La discusión comienza con <strong className="text-accent">{discussionStarter}</strong>.
+            <CardDescription className="text-muted-foreground mt-1 text-sm sm:text-base">
+              La discusión comienza con <strong className="text-accent">{discussionStarter}</strong>.
               Cada jugador debe dar <strong className="text-primary">una única palabra</strong> como pista.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6 px-6 md:px-8">
-            <ScrollArea className="h-[calc(100vh-550px)] min-h-[200px] pr-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+          <CardContent className="space-y-6 px-4 sm:px-6 md:px-8">
+            <ScrollArea className="h-[calc(100vh-580px)] min-h-[150px] sm:min-h-[200px] pr-2 sm:pr-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4">
                 {gameData.players.map(player => (
-                  <div key={player.id} className="space-y-1.5 p-3 bg-secondary/30 rounded-lg border border-border">
-                    <Label htmlFor={`clue-${player.id}`} className="text-base font-medium text-foreground/90 flex items-center">
-                      <User className="w-4 h-4 mr-2 text-primary" />Pista de {player.name}:
+                  <div key={player.id} className="space-y-1 p-2.5 sm:p-3 bg-secondary/30 rounded-lg border border-border">
+                    <Label htmlFor={`clue-${player.id}`} className="text-sm sm:text-base font-medium text-foreground/90 flex items-center">
+                      <User className="w-4 h-4 mr-1.5 sm:mr-2 text-primary" />Pista de {player.name}:
                     </Label>
                     <div className="flex items-center gap-2">
-                      <Input 
+                      <Input
                         id={`clue-${player.id}`}
                         type="text"
                         value={playerCluesLocal[player.id] || ''}
                         onChange={(e: ChangeEvent<HTMLInputElement>) => handleClueChange(player.id, e.target.value)}
                         placeholder="Tu palabra pista..."
-                        className="flex-grow bg-input border-border focus:border-accent focus:ring-accent text-base"
+                        className="flex-grow bg-input border-border focus:border-accent focus:ring-accent text-sm sm:text-base"
                         maxLength={25}
                         disabled={gameData.gamePhase === 'selectAccused'}
                       />
@@ -420,54 +432,55 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                 ))}
               </div>
             </ScrollArea>
-            <Button 
-                onClick={handleFinalizeDiscussion} 
-                className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-lg py-6 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 mt-4"
-                disabled={!allCluesFilled || gameData.gamePhase === 'selectAccused'}
+            <Button
+              onClick={handleFinalizeDiscussion}
+              className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-md sm:text-lg py-4 sm:py-6 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 mt-2 sm:mt-4"
+              disabled={!allCluesFilled || gameData.gamePhase === 'selectAccused'}
+              aria-label="Finalizar discusión y registrar voto"
             >
               <Send className="mr-2 h-5 w-5" /> Finalizar Discusión y Registrar Voto
             </Button>
-             <div className="flex flex-col sm:flex-row gap-3 mt-4">
-                <Button onClick={handlePlayAgainSamePlayers} variant="secondary" className="w-full py-3"  disabled={gameData.gamePhase === 'selectAccused'}>
-                    <RotateCcw className="mr-2" /> Jugar de Nuevo (Mismos Jugadores)
-                </Button>
-                <Button onClick={handleStartNewGameSetup} variant="outline" className="w-full py-3 border-muted-foreground/50 text-muted-foreground hover:border-primary hover:text-primary"  disabled={gameData.gamePhase === 'selectAccused'}>
-                    <UsersRound className="mr-2" /> Nueva Configuración de Partida
-                </Button>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-3 sm:mt-4">
+              <Button onClick={handlePlayAgainSamePlayers} variant="secondary" className="w-full py-2.5 sm:py-3 text-sm sm:text-base" disabled={gameData.gamePhase === 'selectAccused'}>
+                <RotateCcw className="mr-2" /> Jugar de Nuevo (Mismos Jugadores)
+              </Button>
+              <Button onClick={handleStartNewGameSetup} variant="outline" className="w-full py-2.5 sm:py-3 border-muted-foreground/50 text-muted-foreground hover:border-primary hover:text-primary text-sm sm:text-base" disabled={gameData.gamePhase === 'selectAccused'}>
+                <UsersRound className="mr-2" /> Nueva Configuración
+              </Button>
             </div>
           </CardContent>
         </Card>
-        
+
         <Dialog open={showAccusationModal} onOpenChange={(isOpen) => {
-          if (!isOpen && gameData.gamePhase === 'selectAccused') { 
+          if (!isOpen && gameData.gamePhase === 'selectAccused') {
             setGameData(prev => prev ? { ...prev, gamePhase: 'discussionAndClues' } : null);
           }
           setShowAccusationModal(isOpen);
         }}>
-          <DialogContent className="sm:max-w-md bg-card shadow-2xl rounded-lg border-primary/50">
+          <DialogContent className="sm:max-w-sm bg-card shadow-2xl rounded-lg border-primary/50">
             <DialogHeader className="text-center">
-              <DialogTitle className="text-2xl text-primary">Registrar Jugador Acusado</DialogTitle>
-              <DialogDescription className="text-muted-foreground mt-1">
+              <DialogTitle className="text-xl sm:text-2xl text-primary">Registrar Jugador Acusado</DialogTitle>
+              <DialogDescription className="text-muted-foreground mt-1 text-sm sm:text-base">
                 El grupo ha deliberado y votado en persona. Selecciona al jugador que ha sido acusado.
               </DialogDescription>
             </DialogHeader>
-            <div className="my-6">
+            <div className="my-4 sm:my-6">
               <Select onValueChange={setSelectedAccusationTargetId} value={selectedAccusationTargetId || undefined}>
-                <SelectTrigger className="w-full bg-input border-border focus:border-accent focus:ring-accent text-base py-3">
+                <SelectTrigger className="w-full bg-input border-border focus:border-accent focus:ring-accent text-sm sm:text-base py-2.5 sm:py-3">
                   <SelectValue placeholder="Selecciona al jugador acusado" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border">
                   {gameData.players.map(p => (
-                    <SelectItem key={p.id} value={p.id} className="text-base focus:bg-accent/20">{p.name}</SelectItem>
+                    <SelectItem key={p.id} value={p.id} className="text-sm sm:text-base focus:bg-accent/20">{p.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <DialogFooter className="sm:justify-center gap-2">
-               <DialogClose asChild>
-                <Button type="button" variant="outline" className="w-full sm:w-auto">Cancelar</Button>
+            <DialogFooter className="flex-col sm:flex-row sm:justify-center gap-2">
+              <DialogClose asChild>
+                <Button type="button" variant="outline" className="w-full sm:w-auto text-sm sm:text-base">Cancelar</Button>
               </DialogClose>
-              <Button onClick={handleConfirmAccusation} disabled={!selectedAccusationTargetId} className="w-full sm:w-auto bg-destructive hover:bg-destructive/90 text-destructive-foreground text-base py-3">
+              <Button onClick={handleConfirmAccusation} disabled={!selectedAccusationTargetId} className="w-full sm:w-auto bg-destructive hover:bg-destructive/90 text-destructive-foreground text-sm sm:text-base py-2.5 sm:py-3">
                 <VoteIcon className="mr-2" /> Confirmar Voto y Ver Resultados
               </Button>
             </DialogFooter>
@@ -476,186 +489,193 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
       </div>
     );
   }
-  
+
   // Fase 4: Resultados
   if (gameData.gamePhase === 'results') {
     let winnerMessage = "";
-    let winnerIcon = <Sparkles className="h-8 w-8 text-accent" />;
+    let winnerIcon = <Sparkles className="h-7 w-7 sm:h-8 sm:w-8 text-accent" />;
     const votedPlayer = gameData.players.find(p => p.id === gameData.votedPlayerId);
 
     if (votedPlayer) {
       if (votedPlayer.role === 'payaso') {
         winnerMessage = `¡El Payaso ${votedPlayer.name} ha ganado engañando a todos!`;
-        winnerIcon = <VenetianMask className="h-8 w-8 text-orange-400" />;
+        winnerIcon = <VenetianMask className="h-7 w-7 sm:h-8 sm:w-8 text-orange-400" />;
       } else if (votedPlayer.role === 'mrwhite') {
         winnerMessage = `¡Los Civiles han ganado! Descubrieron a Mr. White: ${votedPlayer.name}.`;
-        winnerIcon = <Users className="h-8 w-8 text-green-400" />;
-      } else { 
+        winnerIcon = <Users className="h-7 w-7 sm:h-8 sm:w-8 text-green-400" />;
+      } else {
         const mrWhitesWin = gameData.mrWhiteNames && gameData.mrWhiteNames.length > 0;
         if (mrWhitesWin) {
           winnerMessage = `¡Mr. White (${gameData.mrWhiteNames?.join(', ')}) ha ganado! ${votedPlayer.name} era un Civil.`;
-          winnerIcon = <ShieldQuestion className="h-8 w-8 text-destructive" />;
-        } else { 
-           winnerMessage = `¡Vaya! ${votedPlayer.name} era un Civil. No había Mr. White o error en la configuración.`;
-           winnerIcon = <HelpCircle className="h-8 w-8 text-muted-foreground" />;
+          winnerIcon = <ShieldQuestion className="h-7 w-7 sm:h-8 sm:w-8 text-destructive" />;
+        } else {
+          winnerMessage = `¡Vaya! ${votedPlayer.name} era un Civil. No había Mr. White o error en la configuración.`;
+          winnerIcon = <HelpCircle className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />;
         }
       }
     } else {
-      winnerMessage = "No se registró ningún voto. Error en la partida."; 
-      winnerIcon = <HelpCircle className="h-8 w-8 text-muted-foreground" />;
+      winnerMessage = "No se registró ningún voto. Error en la partida.";
+      winnerIcon = <HelpCircle className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />;
     }
-    
-    const mrWhiteDisplayNames = gameData.mrWhiteNames && gameData.mrWhiteNames.length > 0 
-      ? gameData.mrWhiteNames.join(', ') 
-      : 'Ninguno (Error de asignación)';
+
+    const mrWhiteDisplayNames = gameData.mrWhiteNames && gameData.mrWhiteNames.length > 0
+      ? gameData.mrWhiteNames.join(', ')
+      : 'Ninguno';
     const payasoDisplayName = gameData.payasoName ? gameData.payasoName : 'Ninguno';
 
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 space-y-6">
-        <Card className="w-full max-w-3xl shadow-2xl bg-card border-primary/30">
+      <div className="flex flex-col items-center justify-start min-h-screen p-4 pt-8 sm:pt-12 space-y-6">
+        <Card className="w-full max-w-lg sm:max-w-xl md:max-w-3xl shadow-2xl bg-card border-primary/30">
           <CardHeader className="text-center pb-4">
-             <GameLogo />
-            <CardTitle className="text-3xl font-semibold text-foreground flex items-center justify-center gap-2">
+            <GameLogo />
+            <CardTitle className="text-2xl sm:text-3xl font-semibold text-foreground flex items-center justify-center gap-2">
               {winnerIcon} ¡Resultados Finales!
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6 px-6 md:px-8">
-            <Alert variant="default" className="bg-accent/10 border-accent/50 rounded-lg text-center relative">
-               {votedPlayer && <Badge variant="default" className="absolute -top-3 -right-3 px-2 py-1 text-xs bg-destructive text-destructive-foreground">{votedPlayer.name} fue acusado</Badge>}
-              <AlertTitle className="text-xl font-semibold text-accent">{winnerMessage}</AlertTitle>
+          <CardContent className="space-y-5 sm:space-y-6 px-4 sm:px-6 md:px-8">
+            <Alert variant="default" className="bg-accent/10 border-accent/50 rounded-lg text-center relative py-4">
+              {votedPlayer && <Badge variant="default" className="absolute -top-2.5 -right-2.5 sm:-top-3 sm:-right-3 px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs bg-destructive text-destructive-foreground shadow-md">{votedPlayer.name} fue acusado</Badge>}
+              <AlertTitle className="text-lg sm:text-xl font-semibold text-accent">{winnerMessage}</AlertTitle>
             </Alert>
-            
-            <Card className="p-4 bg-secondary/30 border-border">
-              <CardContent className="p-0 grid grid-cols-1 md:grid-cols-2 gap-3 text-left">
-                <div><p className="text-lg text-foreground/90">Palabra Civil: <strong className="text-primary">{gameData.civilianWord}</strong></p></div>
-                <div><p className="text-lg text-foreground/90">Mr. White(s) era(n): <strong className="text-destructive">{mrWhiteDisplayNames}</strong></p></div>
+
+            <Card className="p-3 sm:p-4 bg-secondary/30 border-border">
+              <CardContent className="p-0 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-left">
+                <div><p className="text-md sm:text-lg text-foreground/90">Palabra Civil: <strong className="text-primary">{gameData.civilianWord}</strong></p></div>
+                <div><p className="text-md sm:text-lg text-foreground/90">Mr. White(s): <strong className="text-destructive">{mrWhiteDisplayNames}</strong></p></div>
                 {gameData.players.some(p => p.role === 'payaso') && (
-                  <div className="md:col-span-2"><p className="text-lg text-foreground/90">Payaso era: <strong className="text-orange-400">{payasoDisplayName}</strong></p></div>
+                  <div className="sm:col-span-2"><p className="text-md sm:text-lg text-foreground/90">Payaso: <strong className="text-orange-400">{payasoDisplayName}</strong></p></div>
                 )}
               </CardContent>
             </Card>
 
-            <Separator className="my-6 bg-border/50" />
+            <Separator className="my-4 sm:my-6 bg-border/50" />
 
             <div>
-              <h3 className="text-2xl font-semibold mb-4 flex items-center justify-center gap-2 text-primary"><Brain className="w-7 h-7" /> Ranking de Pistas (IA)</h3>
+              <h3 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 flex items-center justify-center gap-2 text-primary"><Brain className="w-6 h-6 sm:w-7 sm:h-7" /> Ranking de Pistas (IA)</h3>
               {isRankingLoading && (
-                <div className="space-y-3 mt-2">
-                  {[...Array(gameData.players.length || 3)].map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-lg bg-muted/50" />)}
+                <div className="space-y-2.5 sm:space-y-3 mt-2">
+                  {[...Array(gameData.players.length || 3)].map((_, i) => <Skeleton key={i} className="h-16 sm:h-20 w-full rounded-lg bg-muted/50" />)}
                 </div>
               )}
-              {rankingError && <Alert variant="destructive" className="mt-2"><AlertTitle>Error de IA</AlertTitle><AlertDescription>{rankingError}</AlertDescription></Alert>}
-              
+              {rankingError && <Alert variant="destructive" className="mt-2"><AlertTriangle className="h-4 w-4" /> <AlertTitle>Error de IA</AlertTitle><AlertDescription>{rankingError}</AlertDescription></Alert>}
+
               {gameData.clueRanking && gameData.clueRanking.length > 0 && (
-                <ScrollArea className="h-80 mt-2 pr-2">
-                  <ul className="space-y-3">
+                <ScrollArea className="h-72 sm:h-80 mt-2 pr-1 sm:pr-2">
+                  <ul className="space-y-2.5 sm:space-y-3">
                     {gameData.clueRanking.map((item, index) => (
-                      <li key={index} className="p-4 bg-card/80 rounded-lg shadow-md border border-border hover:border-primary/50 transition-all">
-                        <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-2">
-                          <div className="flex items-center gap-2 mb-2 sm:mb-0">
-                            <span className={`text-2xl font-bold ${item.rank === 1 ? 'text-accent' : (item.rank === 2 ? 'text-primary' : 'text-foreground/80')}`}>{item.rank}.</span>
-                            <RoleImage role={item.role} altText={getRoleDisplayName(item.role)} className="w-8 h-8 rounded-full shadow-sm" />
-                            <span className="font-semibold text-lg text-foreground">{item.playerName}</span>
-                            <Badge variant={item.role === 'mrwhite' ? 'destructive' : item.role === 'payaso' ? 'default' : 'secondary'} 
-                                   className={`${item.role === 'payaso' ? 'bg-orange-500 text-white' : ''} ml-1 text-xs`}>
+                      <li key={index} className="p-3 sm:p-4 bg-card/80 rounded-lg shadow-md border border-border hover:border-primary/50 transition-all">
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-start mb-1.5 sm:mb-2">
+                          <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-0">
+                            <span className={`text-xl sm:text-2xl font-bold ${item.rank === 1 ? 'text-accent' : (item.rank === 2 ? 'text-primary' : 'text-foreground/80')}`}>{item.rank}.</span>
+                            <RoleImage role={item.role} altText={getRoleDisplayName(item.role)} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full shadow-sm" />
+                            <span className="font-semibold text-md sm:text-lg text-foreground">{item.playerName}</span>
+                            <Badge variant={item.role === 'mrwhite' ? 'destructive' : item.role === 'payaso' ? 'default' : 'secondary'}
+                              className={`${item.role === 'payaso' ? 'bg-orange-500 text-white' : ''} ml-1 text-xs px-1.5 py-0.5`}>
                               {getRoleDisplayName(item.role)}
                             </Badge>
                           </div>
-                          <Badge variant="outline" className="text-sm text-primary border-primary/50 bg-primary/10 self-start sm:self-center">Pista: "{item.clue}"</Badge>
+                          <Badge variant="outline" className="text-sm text-primary border-primary/50 bg-primary/10 self-start sm:self-auto px-2 py-1">Pista: "{item.clue}"</Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground italic ml-1">Justificación IA: {item.justification}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground italic ml-0.5 sm:ml-1 flex">
+                           <FileText size={16} className="mr-1.5 shrink-0 mt-0.5" />
+                           <span className="flex-1">Justificación IA: {item.justification}</span>
+                        </p>
                       </li>
                     ))}
                   </ul>
                 </ScrollArea>
               )}
-               {gameData.clueRanking && gameData.clueRanking.length === 0 && !isRankingLoading && !rankingError && (
-                 <p className="text-muted-foreground mt-4 text-center">No hay pistas para rankear o la IA no pudo procesarlas adecuadamente.</p>
-               )}
+              {gameData.clueRanking && gameData.clueRanking.length === 0 && !isRankingLoading && !rankingError && (
+                <p className="text-muted-foreground mt-4 text-center text-sm sm:text-base">No hay pistas para rankear o la IA no pudo procesarlas.</p>
+              )}
             </div>
 
-            <div className="mt-6 text-center">
-                <Button onClick={handleOpenSuggestionModal} variant="outline" className="border-accent text-accent hover:bg-accent/10 hover:text-accent">
-                    <Lightbulb className="mr-2" /> ¿Cuál habría sido una buena pista? (IA)
-                </Button>
+            <div className="mt-5 sm:mt-6 text-center">
+              <Button onClick={handleOpenSuggestionModal} variant="outline" className="border-accent text-accent hover:bg-accent/10 hover:text-accent text-sm sm:text-base">
+                <Lightbulb className="mr-2" /> ¿Cuál habría sido una buena pista? (IA)
+              </Button>
             </div>
-            
-            <CardFooter className="p-0 pt-8 flex flex-col sm:flex-row gap-3">
-                <Button onClick={handlePlayAgainSamePlayers} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-lg py-6 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105">
-                    <RotateCcw className="mr-2 h-6 w-6" /> Jugar de Nuevo (Mismos Jugadores)
-                </Button>
-                <Button onClick={handleStartNewGameSetup} variant="outline" className="w-full text-lg py-6 rounded-lg border-muted-foreground/50 text-muted-foreground hover:border-primary hover:text-primary">
-                    <UsersRound className="mr-2 h-6 w-6" /> Nueva Configuración de Juego
-                </Button>
+
+            <CardFooter className="p-0 pt-6 sm:pt-8 flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <Button onClick={handlePlayAgainSamePlayers} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-md sm:text-lg py-4 sm:py-6 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105">
+                <RotateCcw className="mr-2 h-5 w-5 sm:h-6 sm:w-6" /> Jugar de Nuevo (Mismos Jugadores)
+              </Button>
+              <Button onClick={handleStartNewGameSetup} variant="outline" className="w-full text-md sm:text-lg py-4 sm:py-6 rounded-lg border-muted-foreground/50 text-muted-foreground hover:border-primary hover:text-primary">
+                <UsersRound className="mr-2 h-5 w-5 sm:h-6 sm:w-6" /> Nueva Configuración de Juego
+              </Button>
             </CardFooter>
           </CardContent>
         </Card>
 
         {/* Modal para Sugerencia de Pista Global */}
         <Dialog open={showSuggestionModal} onOpenChange={setShowSuggestionModal}>
-            <DialogContent className="sm:max-w-md bg-card shadow-xl rounded-lg border-accent/50">
-                <DialogHeader>
-                    <DialogTitle className="text-2xl text-accent flex items-center gap-2"><Lightbulb /> Sugerencia de Pista IA</DialogTitle>
-                    <DialogDescription className="text-muted-foreground mt-1">
-                        Selecciona un rol para obtener una sugerencia de pista basada en la palabra civil de esta partida: <strong className="text-primary">{gameData.civilianWord}</strong>.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="my-4 space-y-4">
-                    <div>
-                        <Label htmlFor="role-suggestion" className="text-sm font-medium text-foreground/90">Sugerir pista para el rol de:</Label>
-                        <Select onValueChange={(value) => setSelectedRoleForSuggestion(value as Player['role'])} value={selectedRoleForSuggestion || undefined}>
-                            <SelectTrigger id="role-suggestion" className="w-full bg-input border-border focus:border-accent focus:ring-accent text-base py-3 mt-1">
-                                <SelectValue placeholder="Selecciona un rol" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-popover border-border">
-                                <SelectItem value="civilian" className="text-base focus:bg-accent/20">Civil</SelectItem>
-                                <SelectItem value="mrwhite" className="text-base focus:bg-accent/20">Mr. White</SelectItem>
-                                <SelectItem value="payaso" className="text-base focus:bg-accent/20">Payaso</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+          <DialogContent className="sm:max-w-md bg-card shadow-xl rounded-lg border-accent/50">
+            <DialogHeader>
+              <DialogTitle className="text-xl sm:text-2xl text-accent flex items-center gap-2"><Lightbulb /> Sugerencia de Pista IA</DialogTitle>
+              <DialogDescription className="text-muted-foreground mt-1 text-sm sm:text-base">
+                Selecciona un rol para obtener una sugerencia de pista basada en la palabra civil de esta partida: <strong className="text-primary">{gameData.civilianWord}</strong>.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="my-4 space-y-3 sm:space-y-4">
+              <div>
+                <Label htmlFor="role-suggestion" className="text-xs sm:text-sm font-medium text-foreground/90">Sugerir pista para el rol de:</Label>
+                <Select onValueChange={(value) => setSelectedRoleForSuggestion(value as Player['role'])} value={selectedRoleForSuggestion || undefined}>
+                  <SelectTrigger id="role-suggestion" className="w-full bg-input border-border focus:border-accent focus:ring-accent text-sm sm:text-base py-2.5 sm:py-3 mt-1">
+                    <SelectValue placeholder="Selecciona un rol" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border">
+                    <SelectItem value="civilian" className="text-sm sm:text-base focus:bg-accent/20">Civil</SelectItem>
+                    <SelectItem value="mrwhite" className="text-sm sm:text-base focus:bg-accent/20">Mr. White</SelectItem>
+                    <SelectItem value="payaso" className="text-sm sm:text-base focus:bg-accent/20">Payaso</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                    {isGeneratingSuggestion && (
-                        <div className="flex items-center justify-center space-x-2 p-4">
-                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                            <p className="text-muted-foreground">Generando sugerencia...</p>
-                        </div>
-                    )}
-                    {suggestionError && (
-                        <Alert variant="destructive">
-                            <AlertTriangle className="h-4 w-4" />
-                            <AlertTitle>Error de Sugerencia</AlertTitle>
-                            <AlertDescription>{suggestionError}</AlertDescription>
-                        </Alert>
-                    )}
-                    {clueSuggestion && (
-                        <Card className="bg-secondary/30 p-4">
-                            <CardContent className="p-0 space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <p className="text-2xl font-semibold text-primary">{clueSuggestion.clue}</p>
-                                    <Button variant="ghost" size="icon" onClick={() => handleCopySuggestion(clueSuggestion.clue)} className="text-muted-foreground hover:text-accent">
-                                        <Copy className="h-5 w-5" />
-                                    </Button>
-                                </div>
-                                <p className="text-sm text-muted-foreground italic"><strong>Justificación IA:</strong> {clueSuggestion.justification}</p>
-                            </CardContent>
-                        </Card>
-                    )}
+              {isGeneratingSuggestion && (
+                <div className="flex items-center justify-center space-x-2 p-3 sm:p-4">
+                  <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin text-primary" />
+                  <p className="text-muted-foreground text-sm sm:text-base">Generando sugerencia...</p>
                 </div>
-                <DialogFooter className="sm:justify-between gap-2">
-                    <DialogClose asChild>
-                        <Button variant="outline">Cerrar</Button>
-                    </DialogClose>
-                    <Button 
-                        onClick={handleGenerateSuggestion} 
-                        disabled={isGeneratingSuggestion || !selectedRoleForSuggestion}
-                        className="bg-primary hover:bg-primary/80"
-                    >
-                        {isGeneratingSuggestion ? <Loader2 className="animate-spin"/> : <Lightbulb className="mr-2"/>}
-                        Generar Sugerencia
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
+              )}
+              {suggestionError && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Error de Sugerencia</AlertTitle>
+                  <AlertDescription>{suggestionError}</AlertDescription>
+                </Alert>
+              )}
+              {clueSuggestion && (
+                <Card className="bg-secondary/30 p-3 sm:p-4">
+                  <CardHeader className="p-0 pb-2">
+                     <CardTitle className="text-lg sm:text-xl text-primary flex items-center justify-between">
+                        Pista Sugerida: "{clueSuggestion.suggestedClue}"
+                        <Button variant="ghost" size="icon" onClick={() => handleCopySuggestion(clueSuggestion.suggestedClue)} className="text-muted-foreground hover:text-accent h-7 w-7 sm:h-8 sm:w-8">
+                            <Copy className="h-4 w-4 sm:h-5 sm:w-5" />
+                        </Button>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <p className="text-xs sm:text-sm text-muted-foreground italic">
+                        <strong>Justificación IA:</strong> {clueSuggestion.justification}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+            <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2">
+              <DialogClose asChild>
+                <Button variant="outline" className="text-sm sm:text-base">Cerrar</Button>
+              </DialogClose>
+              <Button
+                onClick={handleGenerateSuggestion}
+                disabled={isGeneratingSuggestion || !selectedRoleForSuggestion}
+                className="bg-primary hover:bg-primary/80 text-sm sm:text-base"
+              >
+                {isGeneratingSuggestion ? <Loader2 className="animate-spin" /> : <Lightbulb className="mr-1.5 sm:mr-2" />}
+                Generar Sugerencia
+              </Button>
+            </DialogFooter>
+          </DialogContent>
         </Dialog>
       </div>
     );
@@ -667,8 +687,8 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
       <Card className="w-full max-w-md shadow-xl text-center bg-card border-destructive/50">
         <CardHeader><GameLogo /><CardTitle className="text-destructive text-2xl">Error de Fase</CardTitle></CardHeader>
         <CardContent>
-          <p className="text-muted-foreground mb-4">Estado del juego desconocido: {gameData.gamePhase}. Por favor, intenta reiniciar.</p>
-          <Button onClick={handleStartNewGameSetup} className="mt-4 bg-primary hover:bg-primary/90">
+          <p className="text-muted-foreground mb-4 text-sm sm:text-base">Estado del juego desconocido: {gameData.gamePhase}. Por favor, intenta reiniciar.</p>
+          <Button onClick={handleStartNewGameSetup} className="mt-4 bg-primary hover:bg-primary/90 text-sm sm:text-base">
             Ir a Configuración
           </Button>
         </CardContent>
@@ -676,3 +696,4 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     </div>
   );
 }
+
