@@ -65,7 +65,7 @@ Basa tu ranking en:
 IMPORTANTE: Tu respuesta DEBE ser ÚNICAMENTE un objeto JSON válido que coincida estrictamente con el esquema de salida proporcionado. No incluyas ningún texto explicativo antes o después del JSON.
 El objeto JSON DEBE contener una clave llamada "rankedClues". El valor de "rankedClues" DEBE ser un array de objetos, donde cada objeto representa a un jugador y su pista rankeada.
 Cada objeto en el array "rankedClues" debe tener los campos: "playerName" (string), "clue" (string), "role" (enum: 'civilian', 'mrwhite', 'payaso'), "rank" (integer), "justification" (string).
-Incluso si tienes dificultades para rankear, o si no hay pistas significativas, o si hay muy pocos jugadores, DEBES devolver un array vacío para "rankedClues" si es necesario, por ejemplo: {"rankedClues": []}. NUNCA omitas la clave "rankedClues" ni devuelvas null para ella.
+DEBES rankear a todos los jugadores proporcionados, incluso si algunas pistas son débiles, irrelevantes o hay pocos jugadores. Si una pista es particularmente mala para el rol del jugador, el ranking debería reflejar esto (por ejemplo, un ranking más bajo) y la justificación debería explicar por qué. El array "rankedClues" NUNCA debe ser nulo; debe ser un array de objetos, incluso si eso significa dar rankings bajos y justificaciones críticas. Si, después de un esfuerzo genuino, consideras que es imposible rankear (por ejemplo, todas las pistas están vacías o no hay jugadores), SOLO ENTONCES puedes devolver un array vacío para "rankedClues", pero esto debe ser un último recurso. NUNCA omitas la clave "rankedClues" ni devuelvas null o undefined para ella.
 Ordena el array "rankedClues" por tu ranking (la mejor pista primero, es decir, rank 1 arriba).
 Considera el contexto de todas las pistas dadas al rankear una pista individual.
 Asegúrate que la respuesta siempre sea un JSON válido que cumpla con el esquema de salida.
@@ -78,7 +78,7 @@ const rankCluesFlow = ai.defineFlow(
     outputSchema: RankCluesOutputSchema,
   },
   async (input) => {
-    const modelName = 'googleai/gemini-2.0-flash'; // O el modelo que estés usando
+    const modelName = 'googleai/gemini-2.0-flash'; 
     const { output, usage, error } = await ai.generate({
       prompt: `${rankCluesSystemPrompt}
 
@@ -113,8 +113,6 @@ Proporciona tu ranking como un objeto JSON que coincida con el esquema de salida
       throw new Error('La IA no devolvió una respuesta JSON parseable que coincida con el esquema esperado.');
     }
     
-    // Si output.rankedClues es undefined o null (aunque Zod debería prevenir esto si el parseo fue exitoso),
-    // pero el prompt exige que sea un array, incluso vacío.
     if (!Array.isArray(output.rankedClues)) {
         console.error(
             `AI response was parsed, but rankedClues is not an array for model ${modelName}. Received:`, output.rankedClues
@@ -122,9 +120,6 @@ Proporciona tu ranking como un objeto JSON que coincida con el esquema de salida
         console.error('Full AI output object:', JSON.stringify(output, null, 2));
         console.error('Input to AI:', JSON.stringify(input, null, 2));
         console.error('Usage data (if available):', JSON.stringify(usage, null, 2));
-        // Forzar un array vacío si el prompt no fue seguido, para evitar errores posteriores,
-        // aunque idealmente la IA debería cumplir. O lanzar un error.
-        // Por ahora, lanzaremos error para ser estrictos.
         throw new Error('La IA devolvió una respuesta donde `rankedClues` no era un array, según lo esperado.');
     }
     
