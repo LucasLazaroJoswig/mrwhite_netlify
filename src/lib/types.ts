@@ -17,13 +17,16 @@ export interface ClueRankingItem {
   justification: string;
 }
 
+export type GamePhase = 'wordReveal' | 'discussionAndClues' | 'selectAccused' | 'results';
+
 export interface GameData {
   players: Player[];
   civilianWord: string;
   mrWhiteNames?: string[];
   payasoName?: string; // Nombre del payaso, si existe
-  gamePhase: 'wordReveal' | 'discussionAndClues' | 'voting' | 'results';
+  gamePhase: GamePhase;
   playerClues?: { [playerId: string]: string };
   votedPlayerId?: string; // ID del jugador que fue votado
   clueRanking?: ClueRankingItem[];
 }
+

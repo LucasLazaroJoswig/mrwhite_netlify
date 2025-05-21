@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { List, User, Eye, CheckCircle, HelpCircle, RotateCcw, Sparkles, Settings2, UsersRound, ListChecks, Crown, ThumbsUp, Award, Vote, MessageSquarePlus, Brain } from 'lucide-react';
+import { List, User, Eye, CheckCircle, HelpCircle, RotateCcw, Sparkles, Settings2, UsersRound, Brain, MessageSquarePlus, Send, Vote as VoteIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,7 +29,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
   const [showWordModal, setShowWordModal] = useState(false);
   
   const [playerCluesLocal, setPlayerCluesLocal] = useState<{ [playerId: string]: string }>({});
-  const [showVotingModal, setShowVotingModal] = useState(false);
+  const [showAccusationModal, setShowAccusationModal] = useState(false);
   const [selectedAccusationTargetId, setSelectedAccusationTargetId] = useState<string | null>(null);
   
   const [isRankingLoading, setIsRankingLoading] = useState(false);
@@ -38,7 +38,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
   const allPlayersWordRevealed = gameData.players.every(p => p.wordRevealed);
 
   useEffect(() => {
-    if (gameData.players.length > 0 && !allPlayersWordRevealed) {
+    if (gameData.players.length > 0 && !allPlayersWordRevealed && gameData.gamePhase === 'wordReveal') {
       const nextPlayerIdx = gameData.players.findIndex(p => !p.wordRevealed);
       setCurrentPlayerIndex(nextPlayerIdx !== -1 ? nextPlayerIdx : 0);
     } else if (allPlayersWordRevealed && gameData.gamePhase === 'wordReveal') {
@@ -47,11 +47,19 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
   }, [gameData.players, allPlayersWordRevealed, gameData.gamePhase, setGameData]);
   
   useEffect(() => {
-    // Initialize local clues from gameData if available (e.g., on page reload)
     if (gameData.playerClues) {
       setPlayerCluesLocal(gameData.playerClues);
     }
   }, [gameData.playerClues]);
+
+  useEffect(() => {
+    if (gameData.gamePhase === 'selectAccused' && !showAccusationModal) {
+      setShowAccusationModal(true);
+    }
+    if (gameData.gamePhase !== 'selectAccused' && showAccusationModal) {
+      setShowAccusationModal(false);
+    }
+  }, [gameData.gamePhase, showAccusationModal]);
 
 
   const callRankCluesAPI = useCallback(async () => {
@@ -85,7 +93,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
   }, [gameData, isRankingLoading, rankingError, callRankCluesAPI]);
 
 
-  const currentPlayer: Player | undefined = !allPlayersWordRevealed && gameData.players.length > currentPlayerIndex 
+  const currentPlayer: Player | undefined = !allPlayersWordRevealed && gameData.players.length > currentPlayerIndex && gameData.gamePhase === 'wordReveal'
     ? gameData.players[currentPlayerIndex] 
     : undefined;
 
@@ -104,7 +112,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     );
     
     setGameData(prev => prev ? { ...prev, players: updatedPlayers } : null);
-    setPlayerForModal(null);
+    // No limpiar playerForModal aquí, se limpiará cuando se cierre el Dialog por completo.
   };
   
   const handleStartNewGameSetup = () => {
@@ -126,31 +134,37 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     setPlayerCluesLocal(prev => ({ ...prev, [playerId]: value }));
   };
 
-  const handleStartVoting = () => {
-    // Validate all clues are filled (optional, or AI can handle empty)
-    // For now, assume clues can be empty.
-    setGameData(prev => prev ? ({ ...prev, playerClues: playerCluesLocal, gamePhase: 'voting' }) : null);
-    setShowVotingModal(true);
+  const handleFinalizeDiscussion = () => {
+    setGameData(prev => prev ? ({ ...prev, playerClues: playerCluesLocal, gamePhase: 'selectAccused' }) : null);
+    // setShowAccusationModal(true); // Esto se manejará por el useEffect
   };
 
-  const handleConfirmVote = () => {
+  const handleConfirmAccusation = () => {
     if (!selectedAccusationTargetId) return;
     setGameData(prev => prev ? ({ 
       ...prev, 
       votedPlayerId: selectedAccusationTargetId, 
       gamePhase: 'results' 
     }) : null);
-    setShowVotingModal(false);
+    // setShowAccusationModal(false); // Se maneja por useEffect
     setSelectedAccusationTargetId(null);
-    // AI ranking will be triggered by useEffect watching gamePhase === 'results'
   };
 
-
-  // --- RENDER LOGIC BASED ON gameData.gamePhase ---
 
   // Fase 1: Revelando palabras
   if (gameData.gamePhase === 'wordReveal') {
     if (!currentPlayer) {
+       // Esto puede ocurrir brevemente si todos han visto sus palabras y la fase está cambiando
+      if (allPlayersWordRevealed) {
+        return (
+          <div className="flex flex-col items-center justify-center min-h-screen p-4">
+            <Card className="w-full max-w-md shadow-xl text-center">
+              <CardHeader><CardTitle className="text-primary">Preparando Siguiente Fase...</CardTitle></CardHeader>
+              <CardContent><p>Todos los jugadores han visto sus roles.</p></CardContent>
+            </Card>
+          </div>
+        );
+      }
       return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <Card className="w-full max-w-md shadow-xl text-center">
@@ -193,15 +207,20 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                 <Eye className="mr-2" /> Revelar Mi Rol y Palabra
               </Button>
             </div>
-            <Dialog open={showWordModal} onOpenChange={(isOpen) => { setShowWordModal(isOpen); if (!isOpen) setPlayerForModal(null); }}>
+            <Dialog open={showWordModal} onOpenChange={(isOpen) => { 
+                setShowWordModal(isOpen); 
+                if (!isOpen) setPlayerForModal(null); 
+              }}>
               <DialogContent className="sm:max-w-md bg-card shadow-2xl rounded-lg">
                 <DialogHeader>
-                  <DialogTitle className="text-2xl text-primary text-center">{modalTitle}</DialogTitle>
-                  <DialogDescription className="text-center text-muted-foreground">{modalDescription}</DialogDescription>
+                  <DialogTitle className="text-2xl text-primary text-center">{playerForModal ? (playerForModal.role === 'payaso' ? `¡Eres el Payaso, ${playerForModal.name}!` : (playerForModal.role === 'mrwhite' ? `Tu Identidad Secreta, ${playerForModal.name}` : `Tu Palabra Secreta, ${playerForModal.name}`)) : "Cargando..."}</DialogTitle>
+                  <DialogDescription className="text-center text-muted-foreground">
+                    {playerForModal ? (playerForModal.role === 'payaso' ? `Tu objetivo: ¡que te voten como si fueras Mr. White! Conoces la palabra civil.` : (playerForModal.role === 'mrwhite' ? `No conoces la palabra civil. ¡Intenta adivinarla y que no te descubran!` : "¡Guarda esta información para ti!")) : ""}
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="my-6 p-6 bg-secondary/30 rounded-md text-center">
                   <p className={`text-3xl font-bold ${playerForModal?.role === 'mrwhite' || playerForModal?.role === 'payaso' ? 'text-accent' : 'text-primary'}`}>
-                    {modalWordToDisplay}
+                    {playerForModal ? (playerForModal.role === 'payaso' ? `${PAYASO_MESSAGE_PREFIX}: ${playerForModal.word}` : (playerForModal.role === 'mrwhite' ? MR_WHITE_MESSAGE : playerForModal.word)) : "..."}
                   </p>
                 </div>
                 <DialogFooter className="sm:justify-center">
@@ -217,13 +236,13 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                 <ScrollArea className="h-40">
                   <ul className="space-y-2">
                     {gameData.players.map((player) => (
-                      <li key={player.id} className={`flex items-center justify-between p-3 rounded-md transition-all duration-300 ease-in-out ${player.id === currentPlayer.id && !player.wordRevealed ? 'bg-accent/20 ring-2 ring-accent' : 'bg-secondary/20'} ${player.wordRevealed ? 'opacity-60' : ''}`}>
+                      <li key={player.id} className={`flex items-center justify-between p-3 rounded-md transition-all duration-300 ease-in-out ${player.id === currentPlayer?.id && !player.wordRevealed ? 'bg-accent/20 ring-2 ring-accent' : 'bg-secondary/20'} ${player.wordRevealed ? 'opacity-60' : ''}`}>
                         <div className="flex items-center gap-2">
-                          <User className={`h-5 w-5 ${player.id === currentPlayer.id && !player.wordRevealed ? 'text-accent' : 'text-primary'}`} />
+                          <User className={`h-5 w-5 ${player.id === currentPlayer?.id && !player.wordRevealed ? 'text-accent' : 'text-primary'}`} />
                           <span className="font-medium">{player.name}</span>
-                          {player.id === currentPlayer.id && !player.wordRevealed && <Badge variant="default" className="bg-accent text-accent-foreground ml-2 animate-pulse">Turno Actual</Badge>}
+                          {player.id === currentPlayer?.id && !player.wordRevealed && <Badge variant="default" className="bg-accent text-accent-foreground ml-2 animate-pulse">Turno Actual</Badge>}
                         </div>
-                        {player.wordRevealed ? <Badge variant="outline" className="text-green-600 border-green-600"><CheckCircle className="mr-1 h-4 w-4" /> Visto</Badge> : <Badge variant="outline">Esperando...</Badge>}
+                        {player.wordRevealed ? <Badge variant="outline" className="text-green-400 border-green-600"><CheckCircle className="mr-1 h-4 w-4" /> Visto</Badge> : <Badge variant="outline">Esperando...</Badge>}
                       </li>
                     ))}
                   </ul>
@@ -240,8 +259,10 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
   }
 
   // Fase 2: Discusión y Pistas
-  if (gameData.gamePhase === 'discussionAndClues') {
+  if (gameData.gamePhase === 'discussionAndClues' || gameData.gamePhase === 'selectAccused') {
     const discussionStarter = gameData.players.length > 0 ? gameData.players[0].name : "El primer jugador";
+    const allCluesFilled = gameData.players.every(p => playerCluesLocal[p.id] && playerCluesLocal[p.id].trim() !== '');
+
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 space-y-6">
         <Card className="w-full max-w-2xl shadow-xl">
@@ -251,7 +272,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
             </CardTitle>
             <CardDescription>
               Todos han visto su rol. La discusión comienza con <span className="font-semibold text-accent">{discussionStarter}</span>.
-              Cada jugador debe dar una palabra pista.
+              Cada jugador debe dar una palabra pista. La votación se hará en persona.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -268,31 +289,42 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                       placeholder="Escribe tu palabra pista aquí"
                       className="bg-input"
                       maxLength={30}
+                      disabled={gameData.gamePhase === 'selectAccused'}
                     />
                   </div>
                 ))}
               </div>
             </ScrollArea>
-            <Button onClick={handleStartVoting} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mt-4">
-              <Vote className="mr-2" /> Finalizar Discusión e Iniciar Votación
+            <Button 
+                onClick={handleFinalizeDiscussion} 
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mt-4"
+                disabled={!allCluesFilled || gameData.gamePhase === 'selectAccused'}
+            >
+              <Send className="mr-2" /> Finalizar Discusión y Registrar Voto
             </Button>
              <div className="flex gap-2 mt-4">
-                <Button onClick={handlePlayAgainSamePlayers} variant="secondary" className="w-full">
+                <Button onClick={handlePlayAgainSamePlayers} variant="secondary" className="w-full"  disabled={gameData.gamePhase === 'selectAccused'}>
                     <RotateCcw className="mr-2" /> Jugar de Nuevo (Mismos Jugadores)
                 </Button>
-                <Button onClick={handleStartNewGameSetup} variant="outline" className="w-full">
+                <Button onClick={handleStartNewGameSetup} variant="outline" className="w-full"  disabled={gameData.gamePhase === 'selectAccused'}>
                     <UsersRound className="mr-2" /> Nueva Configuración
                 </Button>
             </div>
           </CardContent>
         </Card>
-        {/* Voting Modal */}
-        <Dialog open={showVotingModal} onOpenChange={setShowVotingModal}>
+        
+        <Dialog open={showAccusationModal} onOpenChange={(isOpen) => {
+          if (!isOpen && gameData.gamePhase === 'selectAccused') {
+            // Si se cierra el modal sin confirmar, volver a la fase de discusión
+            setGameData(prev => prev ? { ...prev, gamePhase: 'discussionAndClues' } : null);
+          }
+          setShowAccusationModal(isOpen);
+        }}>
           <DialogContent className="sm:max-w-md bg-card shadow-2xl rounded-lg">
             <DialogHeader>
-              <DialogTitle className="text-2xl text-primary text-center">Votación: ¿Quién es Mr. White?</DialogTitle>
+              <DialogTitle className="text-2xl text-primary text-center">Registrar Jugador Acusado</DialogTitle>
               <DialogDescription className="text-center text-muted-foreground">
-                Tras la discusión, elegid a quién acusáis de ser Mr. White (o el Payaso intentando engañaros).
+                El grupo ha votado en persona. Selecciona al jugador que ha sido acusado.
               </DialogDescription>
             </DialogHeader>
             <div className="my-4">
@@ -308,8 +340,8 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
               </Select>
             </div>
             <DialogFooter className="sm:justify-center">
-              <Button onClick={handleConfirmVote} disabled={!selectedAccusationTargetId} className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-                <CheckCircle className="mr-2" /> Confirmar Voto y Ver Resultados
+              <Button onClick={handleConfirmAccusation} disabled={!selectedAccusationTargetId} className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                <VoteIcon className="mr-2" /> Confirmar Voto y Ver Resultados
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -318,9 +350,6 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     );
   }
   
-  // Fase 3: Votación (Modal) - Se maneja dentro de 'discussionAndClues' como un Dialog.
-  // Podría ser una fase separada si la lógica se vuelve más compleja.
-
   // Fase 4: Resultados
   if (gameData.gamePhase === 'results') {
     let winnerMessage = "";
@@ -331,12 +360,12 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
         winnerMessage = `¡El Payaso ${votedPlayer.name} ha ganado engañando a todos!`;
       } else if (votedPlayer.role === 'mrwhite') {
         winnerMessage = `¡Los Civiles han ganado! Descubrieron a Mr. White: ${votedPlayer.name}.`;
-      } else { // Voted a civilian
+      } else { 
         const mrWhitesWin = gameData.mrWhiteNames && gameData.mrWhiteNames.length > 0;
         if (mrWhitesWin) {
           winnerMessage = `¡Mr. White (o los Mr. Whites: ${gameData.mrWhiteNames?.join(', ')}) han ganado! ${votedPlayer.name} era un Civil.`;
-        } else { // Should not happen if there's always a Mr. White
-           winnerMessage = `¡Vaya! ${votedPlayer.name} era un Civil. Parece que no había Mr. White o hubo un error.`;
+        } else {
+           winnerMessage = `¡Vaya! ${votedPlayer.name} era un Civil. Hubo un error en la partida.`;
         }
       }
     } else {
@@ -359,7 +388,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
           </CardHeader>
           <CardContent className="space-y-4">
             <Alert variant="default" className="bg-accent/20">
-              <Crown className="h-5 w-5 text-accent" />
+              <Badge variant="default" className="absolute -top-3 -right-3 px-2 py-1 text-xs bg-accent text-accent-foreground">{gameData.players.find(p => p.id === gameData.votedPlayerId)?.name || 'Jugador'} fue acusado</Badge>
               <AlertTitle className="text-xl font-semibold text-accent">{winnerMessage}</AlertTitle>
             </Alert>
             
@@ -375,9 +404,9 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
               <h3 className="text-2xl font-semibold mb-3 flex items-center justify-center gap-2 text-primary"><Brain /> Ranking de Pistas por IA</h3>
               {isRankingLoading && (
                 <div className="space-y-2 mt-2">
-                  <Skeleton className="h-8 w-full" />
-                  <Skeleton className="h-8 w-full" />
-                  <Skeleton className="h-8 w-full" />
+                  <Skeleton className="h-8 w-full rounded-md" />
+                  <Skeleton className="h-8 w-full rounded-md" />
+                  <Skeleton className="h-8 w-3/4 rounded-md" />
                 </div>
               )}
               {rankingError && <p className="text-destructive mt-2">{rankingError}</p>}
@@ -388,7 +417,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                       <li key={index} className="p-3 bg-card rounded-md shadow">
                         <div className="flex justify-between items-center mb-1">
                           <span className="font-semibold text-lg text-primary">
-                            {item.rank}. {item.playerName} <Badge variant={item.role === 'mrwhite' ? 'destructive' : item.role === 'payaso' ? 'default' : 'secondary'} className={item.role === 'payaso' ? 'bg-orange-500 text-white' : ''}>
+                            {item.rank}. {item.playerName} <Badge variant={item.role === 'mrwhite' ? 'destructive' : item.role === 'payaso' ? 'default' : 'secondary'} className={`${item.role === 'payaso' ? 'bg-orange-500 text-white' : ''} ml-1`}>
                               {item.role.charAt(0).toUpperCase() + item.role.slice(1)}
                             </Badge>
                           </span>
@@ -400,7 +429,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                   </ul>
                 </ScrollArea>
               )}
-               {gameData.clueRanking && gameData.clueRanking.length === 0 && !isRankingLoading && (
+               {gameData.clueRanking && gameData.clueRanking.length === 0 && !isRankingLoading && !rankingError && (
                  <p className="text-muted-foreground mt-2">No hay pistas para rankear o la IA no pudo procesarlas.</p>
                )}
             </div>
@@ -419,7 +448,6 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     );
   }
 
-  // Fallback, no debería alcanzarse si gamePhase está bien manejado
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       Cargando estado del juego... Error de fase: {gameData.gamePhase}
