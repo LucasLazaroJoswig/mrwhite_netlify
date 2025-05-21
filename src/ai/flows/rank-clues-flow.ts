@@ -71,16 +71,15 @@ Considera el contexto de todas las pistas dadas al rankear una pista individual.
 Asegúrate que la respuesta siempre sea un JSON válido que cumpla con el esquema de salida.
 `;
 
-const rankCluesFlow = ai.defineFlow(
-  {
-    name: 'rankCluesFlow',
-    inputSchema: RankCluesInputSchema,
-    outputSchema: RankCluesOutputSchema,
+const rankCluesPromptObject = ai.definePrompt({
+  name: 'rankCluesPrompt',
+  input: { schema: RankCluesInputSchema },
+  output: { schema: RankCluesOutputSchema },
+  model: 'googleai/gemini-2.0-flash',
+  config: {
+    temperature: 0.2,
   },
-  async (input) => {
-    const modelName = 'googleai/gemini-2.0-flash'; 
-    const { output, usage, error } = await ai.generate({
-      prompt: `${rankCluesSystemPrompt}
+  prompt: `${rankCluesSystemPrompt}
 
 Palabra Civil: {{{civilianWord}}}
 
@@ -90,15 +89,21 @@ Jugadores y Pistas:
 {{/each}}
 
 Proporciona tu ranking como un objeto JSON que coincida con el esquema de salida. Rankea a todos los jugadores.`,
-      model: modelName,
-      output: { schema: RankCluesOutputSchema },
-      config: {
-        temperature: 0.2, 
-      }
-    });
+});
+
+const rankCluesFlow = ai.defineFlow(
+  {
+    name: 'rankCluesFlow',
+    inputSchema: RankCluesInputSchema,
+    outputSchema: RankCluesOutputSchema,
+  },
+  async (input) => {
+    // Llamamos al objeto prompt definido, pasándole el input del flujo.
+    // Genkit se encargará de rellenar la plantilla Handlebars.
+    const { output, usage, error } = await rankCluesPromptObject(input);
 
     if (error) {
-      console.error(`Error from AI model (${modelName}) during rankCluesFlow:`, error);
+      console.error(`Error from AI model (${rankCluesPromptObject.name}) during rankCluesFlow:`, error);
       console.error('Input to AI that caused error:', JSON.stringify(input, null, 2));
       console.error('Usage data (if available):', JSON.stringify(usage, null, 2));
       throw new Error(`Error de la IA al procesar la solicitud: ${error.message || 'Error desconocido'}`);
@@ -106,7 +111,7 @@ Proporciona tu ranking como un objeto JSON que coincida con el esquema de salida
     
     if (!output) {
       console.error(
-        `AI response was null or undefined after Zod parsing for model ${modelName}. This likely means the model returned non-JSON or JSON that did not match the expected schema.`
+        `AI response was null or undefined after Zod parsing for prompt ${rankCluesPromptObject.name}. This likely means the model returned non-JSON or JSON that did not match the expected schema.`
       );
       console.error('Input to AI:', JSON.stringify(input, null, 2));
       console.error('Usage data (if available):', JSON.stringify(usage, null, 2));
@@ -115,7 +120,7 @@ Proporciona tu ranking como un objeto JSON que coincida con el esquema de salida
     
     if (!Array.isArray(output.rankedClues)) {
         console.error(
-            `AI response was parsed, but rankedClues is not an array for model ${modelName}. Received:`, output.rankedClues
+            `AI response was parsed, but rankedClues is not an array for prompt ${rankCluesPromptObject.name}. Received:`, output.rankedClues
         );
         console.error('Full AI output object:', JSON.stringify(output, null, 2));
         console.error('Input to AI:', JSON.stringify(input, null, 2));
@@ -123,6 +128,7 @@ Proporciona tu ranking como un objeto JSON que coincida con el esquema de salida
         throw new Error('La IA devolvió una respuesta donde `rankedClues` no era un array, según lo esperado.');
     }
     
+    // Ordenar las pistas por ranking (menor a mayor)
     output.rankedClues.sort((a, b) => a.rank - b.rank);
     return output;
   }
