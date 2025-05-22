@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { List, User, Eye, CheckCircle, HelpCircle, RotateCcw, Sparkles, Settings2, UsersRound, Brain, Mic2, Send, Vote as VoteIcon, VenetianMask, ShieldQuestion, Users, Shuffle, Lightbulb, Copy, Loader2, AlertTriangle, FileText } from 'lucide-react';
+import { List, User, Eye, CheckCircle, HelpCircle, RotateCcw, Sparkles, Settings2, UsersRound, Brain, Mic2, Send, Vote as VoteIcon, VenetianMask, ShieldQuestion, Users as UsersIcon, Shuffle, Lightbulb, Copy, Loader2, AlertTriangle, FileText, Drama, Smile, ShieldAlert } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -38,17 +38,32 @@ const GameLogo = () => (
   </div>
 );
 
+const getRoleIcon = (role: Player['role']) => {
+  if (role === 'civilian') return <Smile className="inline-block mr-1.5 text-blue-400" size={20} />;
+  if (role === 'mrwhite') return <ShieldAlert className="inline-block mr-1.5 text-red-400" size={20} />;
+  if (role === 'payaso') return <Drama className="inline-block mr-1.5 text-orange-400" size={20} />;
+  return <HelpCircle className="inline-block mr-1.5 text-muted-foreground" size={20} />;
+};
+
+const getRoleTextColor = (role: Player['role']) => {
+  if (role === 'civilian') return 'text-blue-400';
+  if (role === 'mrwhite') return 'text-red-400';
+  if (role === 'payaso') return 'text-orange-400';
+  return 'text-muted-foreground';
+};
+
+
 const RoleImage = ({ role, altText, className }: { role: Player['role'], altText: string, className?: string }) => {
   let src = "https://placehold.co/100x100/455A64/FFFFFF.png?text=Rol"; // Default placeholder
   let hint = "question mark";
   if (role === 'civilian') {
-    src = "https://placehold.co/100x100/78909C/FFFFFF.png?text=Civil";
+    src = "https://placehold.co/100x100/5c9ded/FFFFFF.png?text=Civil"; // Blueish
     hint = "group people";
   } else if (role === 'mrwhite') {
-    src = "https://placehold.co/100x100/263238/FFFFFF.png?text=Mr.W";
+    src = "https://placehold.co/100x100/e57373/FFFFFF.png?text=Mr.W"; // Reddish
     hint = "detective mystery";
   } else if (role === 'payaso') {
-    src = "https://placehold.co/100x100/FF8F00/FFFFFF.png?text=Payaso";
+    src = "https://placehold.co/100x100/ffb74d/FFFFFF.png?text=Payaso"; // Orangish
     hint = "clown mask";
   }
 
@@ -121,7 +136,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     try {
       const playersForAI = gameData.players.map(p => ({
         name: p.name,
-        role: p.role,
+        role: p.role, // Pasar el rol real
         clue: gameData.playerClues![p.id] || ""
       }));
       const rankedOutput = await rankClues({
@@ -151,12 +166,12 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
 
   const currentPlayer: Player | undefined = !allPlayersWordRevealed && gameData.players.length > currentPlayerIndex && gameData.gamePhase === 'wordReveal'
-    ? gameData.players[currentPlayerIndex]
+    ? gameData.players[currentPlayerIndex] // Orden de entrada mantenido
     : undefined;
 
   const handleRevealWord = () => {
     if (!currentPlayer) return;
-    setPlayerForModal(currentPlayer);
+    setPlayerForModal(currentPlayer); // Usar el currentPlayer para el modal
     setShowWordModal(true);
   };
 
@@ -169,17 +184,17 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
     setGameData(prev => prev ? { ...prev, players: updatedPlayers } : null);
     setShowWordModal(false);
-    // playerForModal will be cleared by onOpenChange of Dialog
+    // playerForModal se limpiará por onOpenChange del Dialog
   };
 
   const handleStartNewGameSetup = () => {
     localStorage.removeItem('mrWhiteGameData');
-    window.location.href = '/';
+    window.location.href = '/'; // Redirige a la página de configuración
   };
 
   const handlePlayAgainSamePlayers = () => {
-    const playerNames = gameData.players.map(p => p.name);
-    const newGameSetup = initializePlayers(playerNames, gameData.civilianWord);
+    const playerNames = gameData.players.map(p => p.name); // Mantener el orden actual de jugadores
+    const newGameSetup = initializePlayers(playerNames, gameData.civilianWord); // Pasamos la palabra civil anterior
     setGameData(newGameSetup);
     setPlayerCluesLocal({});
     setSelectedAccusationTargetId(null);
@@ -188,7 +203,8 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     setClueSuggestion(null);
     setSuggestionError(null);
     setSelectedRoleForSuggestion(null);
-    toast({ title: "Nueva Partida", description: "Se ha reiniciado el juego con los mismos jugadores." });
+    setCurrentPlayerIndex(0); // Resetear para la nueva ronda de revelación
+    toast({ title: "Nueva Partida", description: "Se ha reiniciado el juego con los mismos jugadores y orden." });
   };
 
   const handleClueChange = (playerId: string, value: string) => {
@@ -206,13 +222,13 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
       votedPlayerId: selectedAccusationTargetId,
       gamePhase: 'results'
     }) : null);
-    setSelectedAccusationTargetId(null);
+    setSelectedAccusationTargetId(null); // Limpiar después de confirmar
   };
 
   const handleOpenSuggestionModal = () => {
     setClueSuggestion(null);
     setSuggestionError(null);
-    setSelectedRoleForSuggestion(null);
+    setSelectedRoleForSuggestion(null); // Resetear rol seleccionado
     setShowSuggestionModal(true);
   };
 
@@ -252,18 +268,20 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     });
   };
 
-  const getRoleDisplayName = (role: Player['role'] | null) => {
-    if (!role) return 'Desconocido';
-    if (role === 'civilian') return 'Civil';
-    if (role === 'mrwhite') return 'Mr. White';
-    if (role === 'payaso') return 'Payaso';
-    return 'Desconocido';
+  const getRoleDisplayName = (role: Player['role'] | null, withIcon = false) => {
+    let name = 'Desconocido';
+    if (role === 'civilian') name = 'Civil';
+    if (role === 'mrwhite') name = 'Mr. White';
+    if (role === 'payaso') name = 'Payaso';
+    
+    return withIcon ? <>{getRoleIcon(role)} {name}</> : name;
   };
 
 
   // Fase 1: Revelando palabras
   if (gameData.gamePhase === 'wordReveal') {
     if (!currentPlayer && allPlayersWordRevealed) {
+      // Este estado ya no debería ocurrir si la transición es correcta
       return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <Card className="w-full max-w-md shadow-xl text-center bg-card border-primary/30">
@@ -274,6 +292,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
       );
     }
     if (!currentPlayer && !allPlayersWordRevealed) {
+      // Posible error de estado, aunque debería ser manejado por useEffect
       return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <Card className="w-full max-w-md shadow-xl text-center bg-card border-destructive/50">
@@ -294,7 +313,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
             <GameLogo />
             <CardTitle className="text-2xl sm:text-3xl font-semibold text-foreground">Fase de Revelación</CardTitle>
             <CardDescription className="text-muted-foreground text-sm sm:text-base">
-              Cada jugador debe ver su rol y palabra en secreto.
+              {`Turno de ${currentPlayer?.name || 'jugador actual'}. Cada jugador debe ver su rol y palabra en secreto.`}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -320,26 +339,27 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
             <Dialog open={showWordModal} onOpenChange={(isOpen) => {
               setShowWordModal(isOpen);
-              if (!isOpen) setTimeout(() => setPlayerForModal(null), 300); // Delay to allow animation
+              if (!isOpen) setTimeout(() => setPlayerForModal(null), 300); 
             }}>
               <DialogContent className="sm:max-w-md bg-card shadow-2xl rounded-lg border-primary/50">
                 {playerForModal && (
                   <>
                     <DialogHeader className="text-center">
-                      <RoleImage role={playerForModal.role} altText={getRoleDisplayName(playerForModal.role)} />
-                      <DialogTitle className="text-2xl sm:text-3xl text-primary">
+                      <RoleImage role={playerForModal.role} altText={getRoleDisplayName(playerForModal.role) as string} />
+                      <DialogTitle className={`text-2xl sm:text-3xl font-bold ${getRoleTextColor(playerForModal.role)} flex items-center justify-center`}>
+                        {getRoleIcon(playerForModal.role)}
                         {playerForModal.role === 'payaso' ? `¡Eres el Payaso, ${playerForModal.name}!` :
                           playerForModal.role === 'mrwhite' ? `Tu Identidad Secreta, ${playerForModal.name}` :
-                            `Tu Palabra Secreta, ${playerForModal.name}`}
+                            `Eres un Civil, ${playerForModal.name}`}
                       </DialogTitle>
                       <DialogDescription className="text-muted-foreground text-sm sm:text-base mt-1">
                         {playerForModal.role === 'payaso' ? `Tu objetivo: ¡que te voten como si fueras Mr. White! Tu palabra civil es:` :
                           playerForModal.role === 'mrwhite' ? `No conoces la palabra civil. ¡Descúbrela y que no te pillen!` :
-                            `Memoriza esta palabra. ¡Es la clave!`}
+                            `Tu palabra secreta es:`}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="my-4 sm:my-6 p-4 sm:p-6 bg-secondary/40 rounded-md text-center">
-                      <p className={`text-3xl sm:text-4xl font-bold ${playerForModal?.role === 'mrwhite' ? 'text-destructive' : (playerForModal?.role === 'payaso' ? 'text-orange-400' : 'text-accent')}`}>
+                      <p className={`text-4xl sm:text-5xl font-extrabold ${getRoleTextColor(playerForModal.role)}`}>
                         {playerForModal.role === 'payaso' ? playerForModal.word :
                           (playerForModal.role === 'mrwhite' ? MR_WHITE_MESSAGE : playerForModal.word)}
                       </p>
@@ -366,7 +386,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                       <li key={player.id}
                         className={`flex items-center justify-between p-2.5 sm:p-3 rounded-md transition-all duration-300 ease-in-out
                                       ${player.id === currentPlayer?.id && !player.wordRevealed ? 'bg-accent/20 ring-2 ring-accent shadow-lg' : 'bg-card/50'}
-                                      ${player.wordRevealed ? 'opacity-50 ' : ''}`}> {/* Removed line-through for better readability */}
+                                      ${player.wordRevealed ? 'opacity-50 ' : ''}`}>
                         <div className="flex items-center gap-2 sm:gap-3">
                           <User className={`h-4 w-4 sm:h-5 sm:w-5 ${player.id === currentPlayer?.id && !player.wordRevealed ? 'text-accent' : 'text-primary'}`} />
                           <span className={`font-medium text-foreground/90 text-sm sm:text-base ${player.wordRevealed ? 'line-through' : ''}`}>{player.name}</span>
@@ -411,7 +431,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
           <CardContent className="space-y-6 px-4 sm:px-6 md:px-8">
             <ScrollArea className="h-[calc(100vh-580px)] min-h-[150px] sm:min-h-[200px] pr-2 sm:pr-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4">
-                {gameData.players.map(player => (
+                {gameData.players.map(player => ( // Usar gameData.players que está en orden de entrada
                   <div key={player.id} className="space-y-1 p-2.5 sm:p-3 bg-secondary/30 rounded-lg border border-border">
                     <Label htmlFor={`clue-${player.id}`} className="text-sm sm:text-base font-medium text-foreground/90 flex items-center">
                       <User className="w-4 h-4 mr-1.5 sm:mr-2 text-primary" />Pista de {player.name}:
@@ -499,17 +519,17 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     if (votedPlayer) {
       if (votedPlayer.role === 'payaso') {
         winnerMessage = `¡El Payaso ${votedPlayer.name} ha ganado engañando a todos!`;
-        winnerIcon = <VenetianMask className="h-7 w-7 sm:h-8 sm:w-8 text-orange-400" />;
+        winnerIcon = <Drama className="h-7 w-7 sm:h-8 sm:w-8 text-orange-400" />;
       } else if (votedPlayer.role === 'mrwhite') {
         winnerMessage = `¡Los Civiles han ganado! Descubrieron a Mr. White: ${votedPlayer.name}.`;
-        winnerIcon = <Users className="h-7 w-7 sm:h-8 sm:w-8 text-green-400" />;
-      } else {
+        winnerIcon = <Smile className="h-7 w-7 sm:h-8 sm:w-8 text-green-400" />;
+      } else { // Votaron a un Civil
         const mrWhitesWin = gameData.mrWhiteNames && gameData.mrWhiteNames.length > 0;
         if (mrWhitesWin) {
           winnerMessage = `¡Mr. White (${gameData.mrWhiteNames?.join(', ')}) ha ganado! ${votedPlayer.name} era un Civil.`;
-          winnerIcon = <ShieldQuestion className="h-7 w-7 sm:h-8 sm:w-8 text-destructive" />;
-        } else {
-          winnerMessage = `¡Vaya! ${votedPlayer.name} era un Civil. No había Mr. White o error en la configuración.`;
+          winnerIcon = <ShieldAlert className="h-7 w-7 sm:h-8 sm:w-8 text-destructive" />;
+        } else { // No había Mr. White o error raro
+          winnerMessage = `¡Vaya! ${votedPlayer.name} era un Civil. No había Mr. White configurado.`;
           winnerIcon = <HelpCircle className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />;
         }
       }
@@ -541,9 +561,9 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
             <Card className="p-3 sm:p-4 bg-secondary/30 border-border">
               <CardContent className="p-0 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-left">
                 <div><p className="text-md sm:text-lg text-foreground/90">Palabra Civil: <strong className="text-primary">{gameData.civilianWord}</strong></p></div>
-                <div><p className="text-md sm:text-lg text-foreground/90">Mr. White(s): <strong className="text-destructive">{mrWhiteDisplayNames}</strong></p></div>
+                <div><p className="text-md sm:text-lg text-foreground/90 flex items-center">{getRoleIcon('mrwhite')}Mr. White(s): <strong className={getRoleTextColor('mrwhite')}>{mrWhiteDisplayNames}</strong></p></div>
                 {gameData.players.some(p => p.role === 'payaso') && (
-                  <div className="sm:col-span-2"><p className="text-md sm:text-lg text-foreground/90">Payaso: <strong className="text-orange-400">{payasoDisplayName}</strong></p></div>
+                  <div className="sm:col-span-2"><p className="text-md sm:text-lg text-foreground/90 flex items-center">{getRoleIcon('payaso')}Payaso: <strong className={getRoleTextColor('payaso')}>{payasoDisplayName}</strong></p></div>
                 )}
               </CardContent>
             </Card>
@@ -567,11 +587,11 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                         <div className="flex flex-col sm:flex-row justify-between sm:items-start mb-1.5 sm:mb-2">
                           <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-0">
                             <span className={`text-xl sm:text-2xl font-bold ${item.rank === 1 ? 'text-accent' : (item.rank === 2 ? 'text-primary' : 'text-foreground/80')}`}>{item.rank}.</span>
-                            <RoleImage role={item.role} altText={getRoleDisplayName(item.role)} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full shadow-sm" />
+                            <RoleImage role={item.role} altText={getRoleDisplayName(item.role) as string} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full shadow-sm" />
                             <span className="font-semibold text-md sm:text-lg text-foreground">{item.playerName}</span>
                             <Badge variant={item.role === 'mrwhite' ? 'destructive' : item.role === 'payaso' ? 'default' : 'secondary'}
-                              className={`${item.role === 'payaso' ? 'bg-orange-500 text-white' : ''} ml-1 text-xs px-1.5 py-0.5`}>
-                              {getRoleDisplayName(item.role)}
+                              className={`${getRoleTextColor(item.role)} ${item.role === 'payaso' ? 'bg-orange-500/20 border-orange-600' : (item.role === 'mrwhite' ? 'bg-red-500/20 border-red-600' : 'bg-blue-500/20 border-blue-600')} text-xs px-1.5 py-0.5`}>
+                              {getRoleIcon(item.role)} {getRoleDisplayName(item.role)}
                             </Badge>
                           </div>
                           <Badge variant="outline" className="text-sm text-primary border-primary/50 bg-primary/10 self-start sm:self-auto px-2 py-1">Pista: "{item.clue}"</Badge>
@@ -624,9 +644,9 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                     <SelectValue placeholder="Selecciona un rol" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
-                    <SelectItem value="civilian" className="text-sm sm:text-base focus:bg-accent/20">Civil</SelectItem>
-                    <SelectItem value="mrwhite" className="text-sm sm:text-base focus:bg-accent/20">Mr. White</SelectItem>
-                    <SelectItem value="payaso" className="text-sm sm:text-base focus:bg-accent/20">Payaso</SelectItem>
+                    <SelectItem value="civilian" className="text-sm sm:text-base focus:bg-accent/20">{getRoleIcon('civilian')} Civil</SelectItem>
+                    <SelectItem value="mrwhite" className="text-sm sm:text-base focus:bg-accent/20">{getRoleIcon('mrwhite')} Mr. White</SelectItem>
+                    <SelectItem value="payaso" className="text-sm sm:text-base focus:bg-accent/20">{getRoleIcon('payaso')} Payaso</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -648,7 +668,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                 <Card className="bg-secondary/30 p-3 sm:p-4">
                   <CardHeader className="p-0 pb-2">
                      <CardTitle className="text-lg sm:text-xl text-primary flex items-center justify-between">
-                        Pista Sugerida: "{clueSuggestion.suggestedClue}"
+                        Pista: "{clueSuggestion.suggestedClue}"
                         <Button variant="ghost" size="icon" onClick={() => handleCopySuggestion(clueSuggestion.suggestedClue)} className="text-muted-foreground hover:text-accent h-7 w-7 sm:h-8 sm:w-8">
                             <Copy className="h-4 w-4 sm:h-5 sm:w-5" />
                         </Button>
@@ -696,4 +716,3 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     </div>
   );
 }
-

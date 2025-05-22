@@ -90,7 +90,7 @@ export function initializePlayers(
   let numberOfMrWhites = 0;
   let includePayaso = false;
 
-  // Nueva distribución de roles
+  // Distribución de roles actualizada
   if (playerNames.length >= 3 && playerNames.length <= 7) {
     numberOfMrWhites = 1;
     includePayaso = false;
@@ -104,13 +104,13 @@ export function initializePlayers(
 
 
   const playerIndices = Array.from(Array(playerNames.length).keys());
-  let shuffledPlayerIndices = shuffleArray(playerIndices);
+  let shuffledPlayerIndicesForRoleAssignment = shuffleArray(playerIndices); // Barajar solo para la asignación de roles
 
   const mrWhiteIndices = new Set<number>();
   // Asignar Mr. Whites primero
   for (let i = 0; i < numberOfMrWhites; i++) {
-    if (shuffledPlayerIndices.length > 0) {
-        const assignedIndex = shuffledPlayerIndices.shift(); // Take from the front and remove
+    if (shuffledPlayerIndicesForRoleAssignment.length > 0) {
+        const assignedIndex = shuffledPlayerIndicesForRoleAssignment.shift(); 
         if (assignedIndex !== undefined) {
             mrWhiteIndices.add(assignedIndex);
         }
@@ -121,13 +121,13 @@ export function initializePlayers(
   let payasoName: string | undefined = undefined;
 
   // Asignar Payaso si corresponde, de los índices restantes
-  if (includePayaso && shuffledPlayerIndices.length > 0) {
-    payasoIndex = shuffledPlayerIndices.shift(); // Take from the front and remove
+  if (includePayaso && shuffledPlayerIndicesForRoleAssignment.length > 0) {
+    payasoIndex = shuffledPlayerIndicesForRoleAssignment.shift(); 
   }
 
 
   const mrWhiteNamesList: string[] = [];
-  const players: Player[] = playerNames.map((name, originalIndex) => {
+  const players: Player[] = playerNames.map((name, originalIndex) => { // Usar originalIndex para mantener el orden
     const isMrWhite = mrWhiteIndices.has(originalIndex);
     const isPayaso = originalIndex === payasoIndex;
     let role: 'civilian' | 'mrwhite' | 'payaso' = 'civilian';
@@ -147,18 +147,18 @@ export function initializePlayers(
       id: `${name.replace(/\s+/g, '-')}-${originalIndex}-${Date.now()}`,
       name,
       word,
-      isMrWhite: role === 'mrwhite',
+      isMrWhite: role === 'mrwhite', // Mantener por si se usa en algún sitio, aunque role es más específico
       role,
       wordRevealed: false,
       clue: '',
     };
   });
 
-  // Re-shuffle players for game order AFTER roles are assigned
-  const finalShuffledPlayers = shuffleArray(players);
+  // NO barajar la lista de jugadores `players` aquí para mantener el orden de entrada.
+  // El orden de las rondas será gestionado por la UI (empezando por players[0] o un índice rotatorio).
 
   return {
-    players: finalShuffledPlayers,
+    players: players, // Lista de jugadores en el orden de entrada
     civilianWord,
     mrWhiteNames: mrWhiteNamesList,
     payasoName,
