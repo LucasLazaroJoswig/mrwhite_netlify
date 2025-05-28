@@ -38,14 +38,14 @@ const GameLogo = () => (
   </div>
 );
 
-const getRoleIcon = (role: Player['role']) => {
+const getRoleIcon = (role: Player['role'] | null) => {
   if (role === 'civilian') return <Smile className="inline-block mr-1.5 text-blue-400" size={20} />;
   if (role === 'mrwhite') return <ShieldAlert className="inline-block mr-1.5 text-red-400" size={20} />;
   if (role === 'payaso') return <Drama className="inline-block mr-1.5 text-orange-400" size={20} />;
   return <HelpCircle className="inline-block mr-1.5 text-muted-foreground" size={20} />;
 };
 
-const getRoleTextColor = (role: Player['role']) => {
+const getRoleTextColor = (role: Player['role'] | null) => {
   if (role === 'civilian') return 'text-blue-400';
   if (role === 'mrwhite') return 'text-red-400';
   if (role === 'payaso') return 'text-orange-400';
@@ -53,29 +53,36 @@ const getRoleTextColor = (role: Player['role']) => {
 };
 
 
-const RoleImage = ({ role, altText, className }: { role: Player['role'], altText: string, className?: string }) => {
+const RoleImage = ({ role, altText, className }: { role: Player['role'] | null, altText: string, className?: string }) => {
   let src = "https://placehold.co/100x100/455A64/FFFFFF.png?text=Rol"; // Default placeholder
   let hint = "question mark";
+  let bgColorClass = "bg-slate-700"; // Default bg for placeholder
+
   if (role === 'civilian') {
     src = "https://placehold.co/100x100/5c9ded/FFFFFF.png?text=Civil"; // Blueish
     hint = "group people";
+    bgColorClass = "bg-blue-800";
   } else if (role === 'mrwhite') {
     src = "https://placehold.co/100x100/e57373/FFFFFF.png?text=Mr.W"; // Reddish
     hint = "detective mystery";
+    bgColorClass = "bg-red-800";
   } else if (role === 'payaso') {
     src = "https://placehold.co/100x100/ffb74d/FFFFFF.png?text=Payaso"; // Orangish
     hint = "clown mask";
+    bgColorClass = "bg-orange-700";
   }
 
   return (
-    <Image
-      src={src}
-      alt={altText}
-      width={80}
-      height={80}
-      data-ai-hint={hint}
-      className={className ? className : "rounded-lg mx-auto mb-2 shadow-md"}
-    />
+    <div className={`p-1 rounded-lg shadow-md ${bgColorClass} ${className ? className : 'mx-auto mb-2'}`}>
+      <Image
+        src={src}
+        alt={altText}
+        width={80}
+        height={80}
+        data-ai-hint={hint}
+        className="rounded-md object-cover"
+      />
+    </div>
   );
 };
 
@@ -166,12 +173,12 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
 
   const currentPlayer: Player | undefined = !allPlayersWordRevealed && gameData.players.length > currentPlayerIndex && gameData.gamePhase === 'wordReveal'
-    ? gameData.players[currentPlayerIndex] // Orden de entrada mantenido
+    ? gameData.players[currentPlayerIndex]
     : undefined;
 
   const handleRevealWord = () => {
     if (!currentPlayer) return;
-    setPlayerForModal(currentPlayer); // Usar el currentPlayer para el modal
+    setPlayerForModal(currentPlayer); 
     setShowWordModal(true);
   };
 
@@ -193,8 +200,20 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
   };
 
   const handlePlayAgainSamePlayers = () => {
-    const playerNames = gameData.players.map(p => p.name); // Mantener el orden actual de jugadores
-    const newGameSetup = initializePlayers(playerNames, gameData.civilianWord); // Pasamos la palabra civil anterior
+    // Rotar la lista de jugadores para que el siguiente jugador en el orden original comience
+    let rotatedPlayerNames: string[];
+    if (gameData.players.length > 1) {
+      const currentPlayersCopy = [...gameData.players];
+      const firstPlayer = currentPlayersCopy.shift(); // Quita el primero
+      if (firstPlayer) {
+        currentPlayersCopy.push(firstPlayer); // Añade el primero al final
+      }
+      rotatedPlayerNames = currentPlayersCopy.map(p => p.name);
+    } else {
+      rotatedPlayerNames = gameData.players.map(p => p.name); // Si solo hay un jugador, no hay rotación
+    }
+
+    const newGameSetup = initializePlayers(rotatedPlayerNames, gameData.civilianWord); // Pasamos la palabra civil anterior
     setGameData(newGameSetup);
     setPlayerCluesLocal({});
     setSelectedAccusationTargetId(null);
@@ -204,7 +223,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     setSuggestionError(null);
     setSelectedRoleForSuggestion(null);
     setCurrentPlayerIndex(0); // Resetear para la nueva ronda de revelación
-    toast({ title: "Nueva Partida", description: "Se ha reiniciado el juego con los mismos jugadores y orden." });
+    toast({ title: "Nueva Partida", description: "Se ha reiniciado el juego con los mismos jugadores en orden rotado." });
   };
 
   const handleClueChange = (playerId: string, value: string) => {
@@ -281,7 +300,6 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
   // Fase 1: Revelando palabras
   if (gameData.gamePhase === 'wordReveal') {
     if (!currentPlayer && allPlayersWordRevealed) {
-      // Este estado ya no debería ocurrir si la transición es correcta
       return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <Card className="w-full max-w-md shadow-xl text-center bg-card border-primary/30">
@@ -292,7 +310,6 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
       );
     }
     if (!currentPlayer && !allPlayersWordRevealed) {
-      // Posible error de estado, aunque debería ser manejado por useEffect
       return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <Card className="w-full max-w-md shadow-xl text-center bg-card border-destructive/50">
@@ -345,7 +362,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                 {playerForModal && (
                   <>
                     <DialogHeader className="text-center">
-                      <RoleImage role={playerForModal.role} altText={getRoleDisplayName(playerForModal.role) as string} />
+                      <RoleImage role={playerForModal.role} altText={getRoleDisplayName(playerForModal.role) as string} className="w-24 h-24 mx-auto mb-3" />
                       <DialogTitle className={`text-2xl sm:text-3xl font-bold ${getRoleTextColor(playerForModal.role)} flex items-center justify-center`}>
                         {getRoleIcon(playerForModal.role)}
                         {playerForModal.role === 'payaso' ? `¡Eres el Payaso, ${playerForModal.name}!` :
@@ -359,7 +376,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                       </DialogDescription>
                     </DialogHeader>
                     <div className="my-4 sm:my-6 p-4 sm:p-6 bg-secondary/40 rounded-md text-center">
-                      <p className={`text-4xl sm:text-5xl font-extrabold ${getRoleTextColor(playerForModal.role)}`}>
+                      <p className={`text-4xl sm:text-5xl font-extrabold ${getRoleTextColor(playerForModal.role)} break-all`}>
                         {playerForModal.role === 'payaso' ? playerForModal.word :
                           (playerForModal.role === 'mrwhite' ? MR_WHITE_MESSAGE : playerForModal.word)}
                       </p>
@@ -431,7 +448,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
           <CardContent className="space-y-6 px-4 sm:px-6 md:px-8">
             <ScrollArea className="h-[calc(100vh-580px)] min-h-[150px] sm:min-h-[200px] pr-2 sm:pr-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4">
-                {gameData.players.map(player => ( // Usar gameData.players que está en orden de entrada
+                {gameData.players.map(player => (
                   <div key={player.id} className="space-y-1 p-2.5 sm:p-3 bg-secondary/30 rounded-lg border border-border">
                     <Label htmlFor={`clue-${player.id}`} className="text-sm sm:text-base font-medium text-foreground/90 flex items-center">
                       <User className="w-4 h-4 mr-1.5 sm:mr-2 text-primary" />Pista de {player.name}:
@@ -716,3 +733,4 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     </div>
   );
 }
+
