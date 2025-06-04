@@ -1,0 +1,15 @@
+# Configuración para Netlify
+
+[build]
+  # Comando para construir tu aplicación Next.js
+  command = "npm run build"
+  
+  # Directorio donde Next.js coloca los archivos de salida de la construcción
+  # Netlify y su plugin Next.js suelen manejar esto automáticamente, 
+  # pero especificar .next es una buena práctica.
+  publish = ".next"
+
+# El plugin de Next.js para Netlify generalmente se aplica automáticamente.
+# Esta sección asegura que se utilice, aunque podrías omitirla si Netlify lo detecta.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
