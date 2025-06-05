@@ -2,21 +2,42 @@
 "use client";
 
 import type { ChangeEvent, FormEvent } from 'react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { initializePlayers, MIN_PLAYERS, MAX_PLAYERS } from '@/lib/game-logic';
-import type { GameData } from '@/lib/types';
+import type { GameData, GameMode } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Play, PlusCircle, Trash2, Shuffle } from 'lucide-react';
+import { Users, Play, PlusCircle, Trash2, Shuffle, AlertTriangle, Info } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function GameSetup() {
   const [playerNames, setPlayerNames] = useState<string[]>(Array(MIN_PLAYERS).fill(''));
+  const [gameMode, setGameMode] = useState<GameMode>('mrWhite');
+  const [numMrWhites, setNumMrWhites] = useState<number>(1);
   const router = useRouter();
   const { toast } = useToast();
+
+  const maxMrWhitesAllowed = playerNames.length > 2 ? playerNames.length - 2 : (playerNames.length > 1 ? 1: 0);
+
+  useEffect(() => {
+    // Adjust numMrWhites if it becomes invalid due to player count changes
+    if (gameMode === 'mrWhite') {
+      const newMax = playerNames.length > 2 ? playerNames.length - 2 : (playerNames.length > 1 ? 1: 0);
+      if (numMrWhites > newMax) {
+        setNumMrWhites(Math.max(1, newMax));
+      } else if (numMrWhites < 1 && newMax >= 1) {
+        setNumMrWhites(1);
+      } else if (newMax === 0 && numMrWhites > 0) {
+         setNumMrWhites(0);
+      }
+    }
+  }, [playerNames.length, gameMode, numMrWhites]);
+
 
   const handlePlayerNameChange = (index: number, event: ChangeEvent<HTMLInputElement>) => {
     const newPlayerNames = [...playerNames];
@@ -73,8 +94,18 @@ export default function GameSetup() {
       return;
     }
 
+    if (gameMode === 'mrWhite' && (numMrWhites < 1 && playerNames.length > 1 || numMrWhites > maxMrWhitesAllowed)) {
+       toast({
+        title: "Error de Validación",
+        description: `Número de Mr. Whites inválido. Debe ser entre 1 y ${maxMrWhitesAllowed} para ${playerNames.length} jugadores.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+
     try {
-      const gameData: GameData = initializePlayers(trimmedPlayerNames);
+      const gameData: GameData = initializePlayers(trimmedPlayerNames, gameMode, numMrWhites);
       localStorage.setItem('mrWhiteGameData', JSON.stringify(gameData));
       router.push('/game');
     } catch (error) {
@@ -113,7 +144,7 @@ export default function GameSetup() {
               <Label className="flex items-center gap-2 text-lg sm:text-xl font-medium text-primary">
                 <Users className="h-5 w-5 sm:h-6 sm:w-6" /> Jugadores ({playerNames.length} / {MAX_PLAYERS})
               </Label>
-              <div className="space-y-2.5 sm:space-y-3 max-h-[240px] sm:max-h-[280px] overflow-y-auto pr-2 rounded-md bg-background/50 p-3 border border-input">
+              <div className="space-y-2.5 sm:space-y-3 max-h-[200px] sm:max-h-[240px] overflow-y-auto pr-2 rounded-md bg-background/50 p-3 border border-input">
                 {playerNames.map((name, index) => (
                   <div key={index} className="space-y-1">
                     <Label htmlFor={`playerName-${index}`} className="text-xs sm:text-sm text-foreground/90">{`Nombre del Jugador ${index + 1}`}</Label>
@@ -157,11 +188,68 @@ export default function GameSetup() {
               </Button>
             )}
 
+            <div className="space-y-2">
+              <Label className="text-md font-medium text-primary">Modo de Juego</Label>
+              <RadioGroup
+                defaultValue="mrWhite"
+                onValueChange={(value) => setGameMode(value as GameMode)}
+                className="flex flex-col sm:flex-row gap-2 sm:gap-4"
+              >
+                <div className="flex items-center space-x-2 p-2.5 rounded-md bg-secondary/20 border border-transparent has-[:checked]:border-accent has-[:checked]:bg-accent/10 transition-all">
+                  <RadioGroupItem value="mrWhite" id="modeMrWhite" className="border-primary/50 text-primary focus:ring-primary data-[state=checked]:border-accent data-[state=checked]:bg-accent"/>
+                  <Label htmlFor="modeMrWhite" className="font-normal text-sm sm:text-base text-foreground/90 cursor-pointer">Mr. White</Label>
+                </div>
+                <div className="flex items-center space-x-2 p-2.5 rounded-md bg-secondary/20 border border-transparent has-[:checked]:border-accent has-[:checked]:bg-accent/10 transition-all">
+                  <RadioGroupItem value="undercover" id="modeUndercover" className="border-primary/50 text-primary focus:ring-primary data-[state=checked]:border-accent data-[state=checked]:bg-accent"/>
+                  <Label htmlFor="modeUndercover" className="font-normal text-sm sm:text-base text-foreground/90 cursor-pointer">Undercover</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {gameMode === 'mrWhite' && playerNames.length >= MIN_PLAYERS && maxMrWhitesAllowed > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="numMrWhites" className="text-md font-medium text-primary">Número de Mr. Whites (1 - {maxMrWhitesAllowed})</Label>
+                <Select
+                  value={String(numMrWhites)}
+                  onValueChange={(value) => setNumMrWhites(Number(value))}
+                >
+                  <SelectTrigger id="numMrWhites" className="w-full bg-input border-border focus:border-primary focus:ring-primary">
+                    <SelectValue placeholder="Selecciona número de Mr. Whites" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: maxMrWhitesAllowed }, (_, i) => i + 1).map(num => (
+                      <SelectItem key={num} value={String(num)}>{num} Mr. White{num > 1 ? 's' : ''}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+             {gameMode === 'mrWhite' && maxMrWhitesAllowed === 0 && playerNames.length >= MIN_PLAYERS && (
+                 <div className="p-3 rounded-md bg-yellow-500/10 border border-yellow-600/30 text-yellow-200/90 text-xs flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0"/>
+                    <span>No hay suficientes jugadores para asignar un Mr. White (mínimo 3 para 1 Mr. White, o más si el Payaso está activo).</span>
+                </div>
+            )}
+
+
+            {gameMode === 'undercover' && (
+                 <div className="p-3 rounded-md bg-blue-500/10 border border-blue-600/30 text-blue-200/90 text-xs flex items-center gap-2">
+                    <Info className="h-4 w-4 shrink-0"/>
+                    <span>En modo Undercover, un jugador recibirá una palabra similar. Los Mr. White se desactivan. El Payaso puede aparecer con 8+ jugadores.</span>
+                </div>
+            )}
+
+
             <CardFooter className="p-0 pt-4 sm:pt-6">
               <Button
                 type="submit"
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-md sm:text-lg py-3 sm:py-6 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105"
-                disabled={playerNames.some(name => name.trim() === '') || playerNames.length < MIN_PLAYERS}
+                disabled={
+                    playerNames.some(name => name.trim() === '') || 
+                    playerNames.length < MIN_PLAYERS ||
+                    (gameMode === 'mrWhite' && numMrWhites > maxMrWhitesAllowed && maxMrWhitesAllowed > 0) ||
+                    (gameMode === 'mrWhite' && numMrWhites < 1 && maxMrWhitesAllowed > 0)
+                }
                 aria-label="Empezar juego"
               >
                 <Play className="mr-2 h-5 w-5 sm:h-6 sm:w-6" /> Empezar Juego
@@ -172,9 +260,8 @@ export default function GameSetup() {
       </Card>
       <p className="mt-6 sm:mt-8 text-xs text-muted-foreground text-center">
         Tip: Mínimo {MIN_PLAYERS} jugadores, máximo {MAX_PLAYERS}.<br/>
-        Las reglas de Mr. White y Payaso varían según el número de jugadores.
+        El Payaso aparece con 8+ jugadores.
       </p>
     </div>
   );
 }
-

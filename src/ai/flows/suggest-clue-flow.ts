@@ -12,14 +12,15 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const SuggestClueInputSchema = z.object({
-  civilianWord: z.string().describe('La palabra secreta para los civiles y el payaso.'),
-  playerRole: z.enum(['civilian', 'mrwhite', 'payaso']).describe('El rol del jugador que solicita la sugerencia.'),
+  playerRole: z.enum(['civilian', 'mrwhite', 'payaso', 'undercover']).describe('El rol del jugador que solicita la sugerencia.'),
+  wordKnownByPlayer: z.string().describe('La palabra específica que conoce el jugador (palabra civil, mensaje de Mr. White, o palabra del Undercover).'),
+  actualCivilianWord: z.string().describe('La palabra civil principal del juego. Para Mr. White, puede ser la misma que wordKnownByPlayer si se prefiere no revelarla, pero para Undercover es crucial.'),
 });
 export type SuggestClueInput = z.infer<typeof SuggestClueInputSchema>;
 
 const SuggestClueOutputSchema = z.object({
   suggestedClue: z.string().describe('La palabra pista sugerida por la IA. Debe ser una única palabra.'),
-  justification: z.string().describe('Una breve explicación de por qué esta pista es buena para el rol y la palabra civil dada.'),
+  justification: z.string().describe('Una breve explicación de por qué esta pista es buena para el rol y las palabras dadas.'),
 });
 export type SuggestClueOutput = z.infer<typeof SuggestClueOutputSchema>;
 
@@ -28,14 +29,15 @@ export async function suggestClue(input: SuggestClueInput): Promise<SuggestClueO
 }
 
 const suggestClueSystemPrompt = `
-Eres un asistente experto en el juego de deducción social "Mr. White".
-Tu tarea es sugerir una ÚNICA palabra como pista para un jugador, basada en su rol y la palabra civil.
-La pista debe ser MUY BUENA y la justificación concisa.
+Eres un asistente experto en el juego de deducción social "Mr. White" y sus variantes.
+Tu tarea es sugerir una ÚNICA palabra como pista para un jugador, basada en su rol, la palabra que conoce y la palabra civil principal del juego.
+La pista debe ser MUY BUENA y la justificación concisa y útil.
 
 Objetivos de Rol para la Pista Sugerida:
-- Si el rol es 'civilian': Sugiere una pista sutil e inteligente relacionada con la "Palabra Civil". Debe ayudar a otros civiles a identificar la palabra sin revelarla demasiado a Mr. White. Valora la creatividad y los juegos de palabras. Evita pistas demasiado obvias o directas.
-- Si el rol es 'mrwhite': Como Mr. White no conoce la palabra civil, sugiere una pista general, ambigua o astuta que podría encajar con muchas palabras o que le permita mezclarse. La justificación debe explicar cómo esta pista le ayuda a parecer que conoce la palabra.
-- Si el rol es 'payaso': Sugiere una pista que sea extraña, confusa o que haga al jugador parecer sospechoso (como si fuera Mr. White). El objetivo es que lo voten. La justificación debe explicar cómo la pista ayuda a este objetivo.
+- Si el rol es 'civilian': Sugiere una pista sutil e inteligente relacionada con su 'wordKnownByPlayer' (que será la 'actualCivilianWord'). Debe ayudar a otros civiles a identificar la palabra sin revelarla demasiado a Mr. White o al Undercover. Valora la creatividad y los juegos de palabras. Evita pistas demasiado obvias.
+- Si el rol es 'mrwhite': Como Mr. White no conoce la palabra civil ('wordKnownByPlayer' será un mensaje especial), sugiere una pista general, ambigua o astuta que podría encajar con muchas palabras o que le permita mezclarse. La justificación debe explicar cómo esta pista le ayuda a parecer que conoce la 'actualCivilianWord'.
+- Si el rol es 'payaso': Sugiere una pista que sea extraña, confusa o que haga al jugador parecer sospechoso (como si fuera Mr. White/Undercover), basada en la 'actualCivilianWord'. El objetivo es que lo voten. La justificación debe explicar cómo la pista ayuda a este objetivo.
+- Si el rol es 'undercover': El jugador conoce 'wordKnownByPlayer' (su palabra similar) y tú conoces la 'actualCivilianWord'. Sugiere una pista que sea buena para 'wordKnownByPlayer' pero que pueda ser sutilmente confusa o no encajar perfectamente con la 'actualCivilianWord', o que juegue con la ambigüedad entre ambas. El objetivo es parecer un civil de su propia palabra sin ser descubierto fácilmente.
 
 IMPORTANTE: Tu respuesta DEBE ser ÚNICAMENTE un objeto JSON válido que coincida estrictamente con el esquema de salida proporcionado. No incluyas ningún texto explicativo antes o después del JSON.
 El objeto JSON DEBE contener las claves "suggestedClue" (string, una sola palabra) y "justification" (string).
@@ -46,14 +48,15 @@ const suggestCluePromptObject = ai.definePrompt({
   name: 'suggestCluePrompt',
   input: { schema: SuggestClueInputSchema },
   output: { schema: SuggestClueOutputSchema },
-  model: 'googleai/gemini-2.0-flash', 
+  model: 'googleai/gemini-2.0-flash',
   config: {
-    temperature: 0.7, // Un poco más de creatividad para sugerencias
+    temperature: 0.7,
   },
   prompt: `${suggestClueSystemPrompt}
 
-Palabra Civil: {{{civilianWord}}}
 Rol del Jugador: {{{playerRole}}}
+Palabra Conocida por el Jugador: {{{wordKnownByPlayer}}}
+Palabra Civil Principal del Juego: {{{actualCivilianWord}}}
 
 Genera una única palabra como pista y una breve justificación.`,
 });
@@ -83,5 +86,3 @@ const suggestClueFlow = ai.defineFlow(
     return output;
   }
 );
-
-    
