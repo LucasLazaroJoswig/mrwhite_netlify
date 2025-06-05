@@ -11,13 +11,15 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { List, User, Eye, CheckCircle, HelpCircle, RotateCcw, Sparkles, Settings2, UsersRound, Brain, Mic2, Send, Vote as VoteIcon, VenetianMask, ShieldQuestion, Users as UsersIcon, Shuffle, Lightbulb, Copy, Loader2, AlertTriangle, FileText, Drama, Smile, ShieldAlert, UserSecret } from 'lucide-react';
+import { List, User, Eye, CheckCircle, HelpCircle, RotateCcw, Sparkles, Settings2, UsersRound, Brain, Mic2, Send, Vote as VoteIcon, VenetianMask, ShieldQuestion, Users as UsersIcon, Shuffle, Lightbulb, Copy, Loader2, AlertTriangle, FileText, Drama, Smile, ShieldAlert, Glasses } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { initializePlayers, MR_WHITE_MESSAGE } from '@/lib/game-logic';
 import { rankClues } from '@/ai/flows/rank-clues-flow';
+import type { RankCluesInput, ClueRankingItem } from '@/ai/flows/rank-clues-flow';
 import { suggestClue } from '@/ai/flows/suggest-clue-flow';
+import type { SuggestClueInput, SuggestClueOutput } from '@/ai/flows/suggest-clue-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
@@ -42,7 +44,7 @@ const getRoleIcon = (role: Player['role'] | null) => {
   if (role === 'civilian') return <Smile className="inline-block mr-1.5 text-blue-400" size={20} />;
   if (role === 'mrwhite') return <ShieldAlert className="inline-block mr-1.5 text-red-400" size={20} />;
   if (role === 'payaso') return <Drama className="inline-block mr-1.5 text-orange-400" size={20} />;
-  if (role === 'undercover') return <UserSecret className="inline-block mr-1.5 text-purple-400" size={20} />;
+  if (role === 'undercover') return <Glasses className="inline-block mr-1.5 text-purple-400" size={20} />;
   return <HelpCircle className="inline-block mr-1.5 text-muted-foreground" size={20} />;
 };
 
@@ -58,24 +60,24 @@ const getRoleTextColor = (role: Player['role'] | null) => {
 const RoleImage = ({ role, altText, className }: { role: Player['role'] | null, altText: string, className?: string }) => {
   let src = "https://placehold.co/100x100/455A64/FFFFFF.png?text=Rol";
   let hint = "question mark";
-  let bgColorClass = "bg-slate-700";
+  let bgColorClass = "bg-slate-700"; // Darker default
 
   if (role === 'civilian') {
-    src = "https://placehold.co/100x100/5c9ded/FFFFFF.png?text=Civil";
+    src = "https://placehold.co/100x100/5c9ded/FFFFFF.png?text=Civil"; // Lighter blue
     hint = "group people";
-    bgColorClass = "bg-blue-800";
+    bgColorClass = "bg-blue-800"; // Darker blue
   } else if (role === 'mrwhite') {
-    src = "https://placehold.co/100x100/e57373/FFFFFF.png?text=Mr.W";
+    src = "https://placehold.co/100x100/e57373/FFFFFF.png?text=Mr.W"; // Lighter red
     hint = "detective mystery";
-    bgColorClass = "bg-red-800";
+    bgColorClass = "bg-red-800"; // Darker red
   } else if (role === 'payaso') {
-    src = "https://placehold.co/100x100/ffb74d/FFFFFF.png?text=Payaso";
+    src = "https://placehold.co/100x100/ffb74d/FFFFFF.png?text=Payaso"; // Lighter orange
     hint = "clown mask";
-    bgColorClass = "bg-orange-700";
+    bgColorClass = "bg-orange-700"; // Darker orange
   } else if (role === 'undercover') {
-    src = "https://placehold.co/100x100/ab47bc/FFFFFF.png?text=Undr"; // Purpleish
+    src = "https://placehold.co/100x100/ab47bc/FFFFFF.png?text=Undr"; // Lighter purple
     hint = "secret agent";
-    bgColorClass = "bg-purple-800";
+    bgColorClass = "bg-purple-800"; // Darker purple
   }
 
 
@@ -148,14 +150,22 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     setIsRankingLoading(true);
     setRankingError(null);
     try {
-      const playersForAI = gameData.players.map(p => ({
+      const playersForAI: RankCluesInput['players'] = gameData.players.map(p => ({
         name: p.name,
         role: p.role,
         clue: gameData.playerClues![p.id] || "",
-        wordKnownByPlayer: p.word, // Pass the word the player knew
+        wordKnownByPlayer: p.word,
       }));
+
+      if (playersForAI.some(p => !p.clue.trim())) {
+         setGameData(prev => prev ? ({ ...prev, clueRanking: [] }) : null); // Set empty ranking if any clue is missing
+         setRankingError("Algunos jugadores no dieron pistas. No se puede generar ranking.");
+         setIsRankingLoading(false);
+         return;
+      }
+      
       const rankedOutput = await rankClues({
-        civilianWord: gameData.civilianWord, // True civilian word
+        civilianWord: gameData.civilianWord,
         players: playersForAI
       });
       setGameData(prev => prev ? ({ ...prev, clueRanking: rankedOutput.rankedClues }) : null);
@@ -175,7 +185,13 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
   useEffect(() => {
     if (gameData?.gamePhase === 'results' && gameData.votedPlayerId && gameData.playerClues && !gameData.clueRanking && !isRankingLoading && !rankingError) {
-      callRankCluesAPI();
+       const allCluesProvided = gameData.players.every(p => gameData.playerClues![p.id] && gameData.playerClues![p.id].trim() !== '');
+        if (allCluesProvided) {
+            callRankCluesAPI();
+        } else {
+            setGameData(prev => prev ? ({ ...prev, clueRanking: [] }) : null);
+            setRankingError("Ranking no disponible porque no todos los jugadores dieron una pista.");
+        }
     }
   }, [gameData, isRankingLoading, rankingError, callRankCluesAPI]);
 
@@ -199,6 +215,8 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
     setGameData(prev => prev ? { ...prev, players: updatedPlayers } : null);
     setShowWordModal(false);
+    // Do not reset playerForModal immediately to allow modal fade-out animation
+    setTimeout(() => setPlayerForModal(null), 300);
   };
 
   const handleStartNewGameSetup = () => {
@@ -207,6 +225,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
   };
 
   const handlePlayAgainSamePlayers = () => {
+    if (!gameData) return;
     let rotatedPlayerNames: string[];
     if (gameData.players.length > 1) {
       const currentPlayersCopy = [...gameData.players];
@@ -219,11 +238,11 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
       rotatedPlayerNames = gameData.players.map(p => p.name);
     }
 
-    // Pass the gameMode and numberOfMrWhites from the current game to the new setup
     const newGameSetup = initializePlayers(
-        rotatedPlayerNames, 
-        gameData.gameMode, 
-        gameData.numberOfMrWhites, // This is the actual number used in the previous game
+        rotatedPlayerNames,
+        gameData.gameMode,
+        gameData.numberOfMrWhites,
+        gameData.numberOfPayasos, // Pass number of payasos
         gameData.civilianWord
     );
     setGameData(newGameSetup);
@@ -254,17 +273,18 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
       gamePhase: 'results'
     }) : null);
     setSelectedAccusationTargetId(null);
+    setShowAccusationModal(false); // Close modal on confirmation
   };
 
   const handleOpenSuggestionModal = () => {
     setClueSuggestion(null);
     setSuggestionError(null);
-    setSelectedRoleForSuggestion(null);
+    setSelectedRoleForSuggestion(null); // Reset selected role for new suggestion
     setShowSuggestionModal(true);
   };
 
   const handleGenerateSuggestion = async () => {
-    if (!selectedRoleForSuggestion) {
+    if (!selectedRoleForSuggestion || !gameData) {
       setSuggestionError("Por favor, selecciona un rol para la sugerencia.");
       return;
     }
@@ -272,26 +292,24 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     setSuggestionError(null);
     setClueSuggestion(null);
 
-    // Determine the word known by the player for the selected role.
-    // This is a bit tricky as we don't have a specific player instance for this global suggestion.
-    // We'll assume:
-    // - Civilian/Payaso gets the main civilianWord.
-    // - Mr. White gets MR_WHITE_MESSAGE (though the AI should ignore this and suggest generally).
-    // - Undercover gets the undercoverWord (if available from gameData).
     let wordKnownBySelectedRole = gameData.civilianWord;
+    let actualCivilianWordForAI = gameData.civilianWord;
+
     if (selectedRoleForSuggestion === 'mrwhite') {
-        wordKnownBySelectedRole = MR_WHITE_MESSAGE; // AI needs to be smart enough to suggest generally for Mr. White
+        wordKnownBySelectedRole = MR_WHITE_MESSAGE;
     } else if (selectedRoleForSuggestion === 'undercover' && gameData.undercoverPlayer) {
         wordKnownBySelectedRole = gameData.undercoverPlayer.word;
+        // actualCivilianWordForAI remains gameData.civilianWord
     }
-
+    // For Civilian and Payaso, wordKnownBySelectedRole is gameData.civilianWord
 
     try {
-      const suggestion = await suggestClue({
+      const suggestionInput: SuggestClueInput = {
         playerRole: selectedRoleForSuggestion,
         wordKnownByPlayer: wordKnownBySelectedRole,
-        actualCivilianWord: gameData.civilianWord, // Always pass the true civilian word
-      });
+        actualCivilianWord: actualCivilianWordForAI,
+      };
+      const suggestion = await suggestClue(suggestionInput);
       setClueSuggestion(suggestion);
     } catch (err) {
       console.error("Error suggesting clue:", err);
@@ -316,16 +334,20 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
   };
 
   const getRoleDisplayName = (role: Player['role'] | null, forModal: boolean = false, withIcon = false) => {
-    if (forModal && role === 'undercover') { // Undercover sees themselves as Civilian in modal
-      return withIcon ? <>{getRoleIcon('civilian')} Civil</> : 'Civil';
-    }
     let name = 'Desconocido';
-    if (role === 'civilian') name = 'Civil';
-    if (role === 'mrwhite') name = 'Mr. White';
-    if (role === 'payaso') name = 'Payaso';
-    if (role === 'undercover') name = 'Undercover';
+    let iconElement = getRoleIcon(role);
+
+    if (forModal && role === 'undercover') {
+      name = 'Civil';
+      iconElement = getRoleIcon('civilian'); // Show as Civil in modal
+    } else {
+      if (role === 'civilian') name = 'Civil';
+      if (role === 'mrwhite') name = 'Mr. White';
+      if (role === 'payaso') name = 'Payaso';
+      if (role === 'undercover') name = 'Undercover';
+    }
     
-    return withIcon ? <>{getRoleIcon(role)} {name}</> : name;
+    return withIcon ? <>{iconElement} {name}</> : name;
   };
 
 
@@ -400,14 +422,15 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                       />
                       <DialogTitle className={`text-2xl sm:text-3xl font-bold ${getRoleTextColor(playerForModal.role === 'undercover' ? 'civilian' : playerForModal.role)} flex items-center justify-center`}>
                         {getRoleIcon(playerForModal.role === 'undercover' ? 'civilian' : playerForModal.role)}
-                        {playerForModal.role === 'payaso' ? `¡Eres el Payaso, ${playerForModal.name}!` :
-                          playerForModal.role === 'mrwhite' ? `Tu Identidad Secreta, ${playerForModal.name}` :
-                          playerForModal.role === 'undercover' ? `Eres un Civil, ${playerForModal.name}` : // Undercover ve "Civil"
-                            `Eres un Civil, ${playerForModal.name}`}
+                        {playerForModal.role === 'payaso' ? `¡Eres el Payaso!` :
+                          playerForModal.role === 'mrwhite' ? `¡Eres Mr. White!` :
+                          playerForModal.role === 'undercover' ? `Eres un Civil` : 
+                            `Eres un Civil`}
                       </DialogTitle>
                       <DialogDescription className="text-muted-foreground text-sm sm:text-base mt-1">
                         {playerForModal.role === 'payaso' ? `Tu objetivo: ¡que te voten como si fueras Mr. White! Tu palabra civil es:` :
-                          playerForModal.role === 'mrwhite' ? `No conoces la palabra civil. ¡Descúbrela y que no te pillen!` :
+                          playerForModal.role === 'mrwhite' ? `No conoces la palabra civil. ¡Descúbrela y que no te pillen! Tu mensaje es:` :
+                          playerForModal.role === 'undercover' ? `Tu palabra secreta es:` :
                             `Tu palabra secreta es:`}
                       </DialogDescription>
                     </DialogHeader>
@@ -480,7 +503,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 px-4 sm:px-6 md:px-8">
-            <ScrollArea className="h-[calc(100vh-580px)] min-h-[150px] sm:min-h-[200px] pr-2 sm:pr-3">
+            <ScrollArea className="h-[calc(100vh-580px)] min-h-[150px] sm:min-h-[200px] md:min-h-[250px] pr-2 sm:pr-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4">
                 {gameData.players.map(player => (
                   <div key={player.id} className="space-y-1 p-2.5 sm:p-3 bg-secondary/30 rounded-lg border border-border">
@@ -524,7 +547,13 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
 
         <Dialog open={showAccusationModal} onOpenChange={(isOpen) => {
           if (!isOpen && gameData.gamePhase === 'selectAccused') {
-            setGameData(prev => prev ? { ...prev, gamePhase: 'discussionAndClues' } : null);
+            // Keep modal open if game phase is still selectAccused, unless explicitly closed by confirm/cancel.
+            // This prevents closing by clicking outside if we want to force a selection.
+            // For now, let's allow closing by clicking outside.
+            // If an explicit cancel is needed, the DialogClose asChild button handles it.
+             if (!selectedAccusationTargetId) { // If no target is selected yet (i.e. not confirmed)
+                setGameData(prev => prev ? { ...prev, gamePhase: 'discussionAndClues' } : null);
+             }
           }
           setShowAccusationModal(isOpen);
         }}>
@@ -549,7 +578,11 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
             </div>
             <DialogFooter className="flex-col sm:flex-row sm:justify-center gap-2">
               <DialogClose asChild>
-                <Button type="button" variant="outline" className="w-full sm:w-auto text-sm sm:text-base">Cancelar</Button>
+                <Button type="button" variant="outline" className="w-full sm:w-auto text-sm sm:text-base" onClick={() => {
+                    if (gameData.gamePhase === 'selectAccused') {
+                       setGameData(prev => prev ? { ...prev, gamePhase: 'discussionAndClues' } : null);
+                    }
+                }}>Cancelar</Button>
               </DialogClose>
               <Button onClick={handleConfirmAccusation} disabled={!selectedAccusationTargetId} className="w-full sm:w-auto bg-destructive hover:bg-destructive/90 text-destructive-foreground text-sm sm:text-base py-2.5 sm:py-3">
                 <VoteIcon className="mr-2" /> Confirmar Voto y Ver Resultados
@@ -567,41 +600,49 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
     const votedPlayer = gameData.players.find(p => p.id === gameData.votedPlayerId);
 
     if (votedPlayer) {
-      if (votedPlayer.role === 'payaso') {
-        winnerMessage = `¡El Payaso ${votedPlayer.name} ha ganado engañando a todos!`;
-        winnerIcon = getRoleIcon('payaso');
-      } else if (votedPlayer.role === 'mrwhite') {
-        winnerMessage = `¡Los Civiles han ganado! Descubrieron a Mr. White: ${votedPlayer.name}.`;
-        winnerIcon = getRoleIcon('civilian'); // Civiles ganan
-      } else if (votedPlayer.role === 'undercover') {
-        winnerMessage = `¡Los Civiles han ganado! Descubrieron al Undercover: ${votedPlayer.name}.`;
-        winnerIcon = getRoleIcon('civilian'); // Civiles ganan
-      } else { // Votaron a un Civil
-        if (gameData.gameMode === 'mrWhite' && gameData.mrWhiteNames && gameData.mrWhiteNames.length > 0) {
-            winnerMessage = `¡Mr. White (${gameData.mrWhiteNames.join(', ')}) ha ganado! ${votedPlayer.name} era un Civil.`;
-            winnerIcon = getRoleIcon('mrwhite');
-        } else if (gameData.gameMode === 'undercover' && gameData.undercoverPlayer) {
-            winnerMessage = `¡El Undercover (${gameData.undercoverPlayer.name}) ha ganado! ${votedPlayer.name} era un Civil.`;
-            winnerIcon = getRoleIcon('undercover');
-        } else if (gameData.gameMode === 'mrWhite' && (!gameData.mrWhiteNames || gameData.mrWhiteNames.length === 0)) {
-             // No Mr. Whites en juego, y votaron a un Civil. Si hay payaso y no fue él, ¿quién gana?
-             // Podría ser un empate o una victoria para el Payaso si no es votado. Por ahora, mensaje de error.
-            winnerMessage = `¡Vaya! ${votedPlayer.name} era un Civil. No había Mr. White o Undercover en juego.`;
-            winnerIcon = <HelpCircle className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />;
-        } else {
-             winnerMessage = `¡Vaya! ${votedPlayer.name} era un Civil.`;
-             winnerIcon = <HelpCircle className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />;
+        const payasosVotados = gameData.payasoNames?.includes(votedPlayer.name);
+        
+        if (payasosVotados) {
+            winnerMessage = `¡El Payaso ${votedPlayer.name} ha ganado engañando a todos!`;
+            winnerIcon = getRoleIcon('payaso');
+        } else if (votedPlayer.role === 'mrwhite') {
+            winnerMessage = `¡Los Civiles han ganado! Descubrieron a Mr. White: ${votedPlayer.name}.`;
+            winnerIcon = getRoleIcon('civilian'); 
+        } else if (votedPlayer.role === 'undercover') {
+            winnerMessage = `¡Los Civiles han ganado! Descubrieron al Undercover: ${votedPlayer.name}.`;
+            winnerIcon = getRoleIcon('civilian'); 
+        } else { // Votaron a un Civil
+            const mrWhitesEnJuego = gameData.mrWhiteNames && gameData.mrWhiteNames.length > 0;
+            const undercoverEnJuego = !!gameData.undercoverPlayer;
+            const payasosEnJuegoNoVotados = gameData.payasoNames && gameData.payasoNames.length > 0 && !payasosVotados;
+
+            if (mrWhitesEnJuego) {
+                winnerMessage = `¡Mr. White (${gameData.mrWhiteNames!.join(', ')}) ha ganado! ${votedPlayer.name} era un Civil.`;
+                winnerIcon = getRoleIcon('mrwhite');
+            } else if (undercoverEnJuego) {
+                winnerMessage = `¡El Undercover (${gameData.undercoverPlayer!.name}) ha ganado! ${votedPlayer.name} era un Civil.`;
+                winnerIcon = getRoleIcon('undercover');
+            } else if (payasosEnJuegoNoVotados) {
+                 winnerMessage = `¡Los Payasos (${gameData.payasoNames!.join(', ')}) ganan! ${votedPlayer.name} era un Civil y los Payasos no fueron descubiertos.`;
+                 winnerIcon = getRoleIcon('payaso');
+            } else { 
+                 winnerMessage = `¡Vaya! ${votedPlayer.name} era un Civil. No había roles especiales de impostor en juego o no fueron descubiertos.`;
+                 winnerIcon = <HelpCircle className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />;
+            }
         }
-      }
     } else {
-      winnerMessage = "No se registró ningún voto. Error en la partida.";
-      winnerIcon = <HelpCircle className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />;
+        winnerMessage = "No se registró ningún voto. Error en la partida.";
+        winnerIcon = <HelpCircle className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />;
     }
 
     const mrWhiteDisplayNames = gameData.mrWhiteNames && gameData.mrWhiteNames.length > 0
       ? gameData.mrWhiteNames.join(', ')
       : 'Ninguno';
-    const payasoDisplayName = gameData.payasoName ? gameData.payasoName : 'Ninguno';
+    
+    const payasoDisplayNames = gameData.payasoNames && gameData.payasoNames.length > 0
+      ? gameData.payasoNames.join(', ')
+      : 'Ninguno';
+
     const undercoverDisplayName = gameData.undercoverPlayer ? `${gameData.undercoverPlayer.name} (palabra: "${gameData.undercoverPlayer.word}")` : 'Ninguno';
 
     return (
@@ -624,9 +665,9 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                     <div><p className="text-md sm:text-lg text-foreground/90">Palabra Civil Principal: <strong className="text-primary">{gameData.civilianWord}</strong></p></div>
                     {gameData.gameMode === 'mrWhite' && <div><p className="text-md sm:text-lg text-foreground/90 flex items-center">{getRoleIcon('mrwhite')}Mr. White(s): <strong className={getRoleTextColor('mrwhite')}>{mrWhiteDisplayNames}</strong></p></div>}
                     {gameData.gameMode === 'undercover' && <div><p className="text-md sm:text-lg text-foreground/90 flex items-center">{getRoleIcon('undercover')}Undercover: <strong className={getRoleTextColor('undercover')}>{undercoverDisplayName}</strong></p></div>}
-                    {gameData.payasoName && (
-                    <div className={gameData.gameMode === 'mrWhite' ? "sm:col-span-2" : ""}> 
-                        <p className="text-md sm:text-lg text-foreground/90 flex items-center">{getRoleIcon('payaso')}Payaso: <strong className={getRoleTextColor('payaso')}>{payasoDisplayName}</strong></p>
+                    {(gameData.payasoNames && gameData.payasoNames.length > 0) && (
+                    <div className={ (gameData.gameMode === 'mrWhite' && gameData.mrWhiteNames && gameData.mrWhiteNames.length > 0) || gameData.gameMode === 'undercover' ? "" : "sm:col-span-2"}> 
+                        <p className="text-md sm:text-lg text-foreground/90 flex items-center">{getRoleIcon('payaso')}Payaso(s): <strong className={getRoleTextColor('payaso')}>{payasoDisplayNames}</strong></p>
                     </div>
                     )}
                 </CardContent>
@@ -718,9 +759,9 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
                     <SelectItem value="civilian" className="text-sm sm:text-base focus:bg-accent/20">{getRoleIcon('civilian')} Civil</SelectItem>
-                    {gameData.gameMode === 'mrWhite' && <SelectItem value="mrwhite" className="text-sm sm:text-base focus:bg-accent/20">{getRoleIcon('mrwhite')} Mr. White</SelectItem>}
-                    {gameData.gameMode === 'undercover' && <SelectItem value="undercover" className="text-sm sm:text-base focus:bg-accent/20">{getRoleIcon('undercover')} Undercover</SelectItem>}
-                    {gameData.payasoName && <SelectItem value="payaso" className="text-sm sm:text-base focus:bg-accent/20">{getRoleIcon('payaso')} Payaso</SelectItem>}
+                    {gameData.gameMode === 'mrWhite' && (gameData.mrWhiteNames && gameData.mrWhiteNames.length > 0) && <SelectItem value="mrwhite" className="text-sm sm:text-base focus:bg-accent/20">{getRoleIcon('mrwhite')} Mr. White</SelectItem>}
+                    {gameData.gameMode === 'undercover' && gameData.undercoverPlayer && <SelectItem value="undercover" className="text-sm sm:text-base focus:bg-accent/20">{getRoleIcon('undercover')} Undercover</SelectItem>}
+                    {gameData.payasoNames && gameData.payasoNames.length > 0 && <SelectItem value="payaso" className="text-sm sm:text-base focus:bg-accent/20">{getRoleIcon('payaso')} Payaso</SelectItem>}
                   </SelectContent>
                 </Select>
               </div>
@@ -765,7 +806,7 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
                 disabled={isGeneratingSuggestion || !selectedRoleForSuggestion}
                 className="bg-primary hover:bg-primary/80 text-sm sm:text-base"
               >
-                {isGeneratingSuggestion ? <Loader2 className="animate-spin" /> : <Lightbulb className="mr-1.5 sm:mr-2" />}
+                {isGeneratingSuggestion ? <Loader2 className="animate-spin mr-2" /> : <Lightbulb className="mr-1.5 sm:mr-2" />}
                 Generar Sugerencia
               </Button>
             </DialogFooter>
