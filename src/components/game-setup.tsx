@@ -124,7 +124,7 @@ export default function GameSetup() {
         <h1 className="text-4xl sm:text-5xl font-bold text-primary flex items-center justify-center">
           <Shuffle className="w-10 h-10 sm:w-12 sm:h-12 mr-2 sm:mr-3 text-accent" />
           Mr. White
-          <span className="text-foreground/80 ml-1.5 sm:ml-2">Game Manager</span>
+          <span className="text-foreground/80 ml-1.5 sm:ml-2">By Lucas Lazaro</span>
         </h1>
         <p className="text-muted-foreground mt-2 text-md sm:text-lg">¿Quién es el impostor?</p>
       </div>
