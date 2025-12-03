@@ -1,35 +1,41 @@
 
+export type GameMode = 'classic' | 'withHint' | 'categories';
+
+export type CategoryType = 'football' | 'movies' | 'music' | 'food' | 'countries' | 'animals' | 'professions' | 'sports';
+
+export interface CategoryWord {
+  word: string;
+  hint?: string; // Pista vaga para modo withHint
+  subtype?: string; // Ej: "jugador" o "equipo" para fútbol
+}
+
+export interface Category {
+  id: CategoryType;
+  name: string;
+  icon: string;
+  words: CategoryWord[];
+}
+
 export interface Player {
   id: string;
   name: string;
-  word: string; // La palabra que este jugador conoce (puede ser la civil, la de Mr. White, o la del Undercover)
-  isMrWhite: boolean; // True si role es 'mrwhite'
-  role: 'civilian' | 'mrwhite' | 'payaso' | 'undercover';
+  word: string;
+  isImpostor: boolean;
   wordRevealed: boolean;
-  clue?: string;
+  isStartingPlayer: boolean;
 }
 
-export interface ClueRankingItem {
-  playerName: string;
-  clue: string;
-  role: 'civilian' | 'mrwhite' | 'payaso' | 'undercover';
-  rank: number;
-  justification: string;
-}
-
-export type GamePhase = 'wordReveal' | 'discussionAndClues' | 'selectAccused' | 'results';
-export type GameMode = 'mrWhite' | 'undercover';
+export type GamePhase = 'setup' | 'modeSelect' | 'categorySelect' | 'playerSetup' | 'wordReveal' | 'playing' | 'voting' | 'results';
 
 export interface GameData {
   players: Player[];
-  civilianWord: string; // La palabra principal de los civiles
-  mrWhiteNames?: string[];
-  payasoName?: string;
-  undercoverPlayer?: { name: string; word: string }; // Nombre y palabra del Undercover
+  secretWord: string;
+  hint?: string; // Solo para modo withHint
+  subtype?: string; // Ej: "Jugador" o "Equipo"
   gamePhase: GamePhase;
   gameMode: GameMode;
-  playerClues?: { [playerId: string]: string };
+  category?: CategoryType;
+  impostorName?: string;
+  startingPlayerName?: string;
   votedPlayerId?: string;
-  clueRanking?: ClueRankingItem[];
-  numberOfMrWhites: number; // El número real de Mr. Whites en la partida actual
 }
