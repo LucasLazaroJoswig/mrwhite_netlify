@@ -204,6 +204,66 @@ export const GENERAL_WORDS: CategoryWord[] = [
   { word: "Estatua", hint: "Piedra" },
   { word: "Globo", hint: "Fiesta" },
   { word: "Pelota", hint: "Redonda" },
+
+  // Nuevas palabras - Objetos
+  { word: "Paraguas", hint: "Lluvia" },
+  { word: "Brújula", hint: "Norte" },
+  { word: "Linterna", hint: "Pilas" },
+  { word: "Termómetro", hint: "Fiebre" },
+  { word: "Calculadora", hint: "Números" },
+  { word: "Despertador", hint: "Mañana" },
+  { word: "Impresora", hint: "Papel" },
+  { word: "Aspiradora", hint: "Ruido" },
+  { word: "Secador", hint: "Aire" },
+  { word: "Plancha", hint: "Ropa" },
+
+  // Nuevas palabras - Naturaleza
+  { word: "Volcán", hint: "Lava" },
+  { word: "Arcoíris", hint: "Colores" },
+  { word: "Relámpago", hint: "Luz" },
+  { word: "Tsunami", hint: "Ola" },
+  { word: "Tornado", hint: "Viento" },
+  { word: "Glaciar", hint: "Hielo" },
+  { word: "Desierto", hint: "Arena" },
+  { word: "Cascada", hint: "Agua" },
+  { word: "Cueva", hint: "Oscuro" },
+  { word: "Bosque", hint: "Árboles" },
+
+  // Nuevas palabras - Instrumentos
+  { word: "Piano", hint: "Teclas" },
+  { word: "Violín", hint: "Arco" },
+  { word: "Batería", hint: "Baquetas" },
+  { word: "Flauta", hint: "Soplar" },
+  { word: "Trompeta", hint: "Latón" },
+  { word: "Saxofón", hint: "Jazz" },
+  { word: "Arpa", hint: "Cuerdas" },
+  { word: "Acordeón", hint: "Fuelle" },
+  { word: "Tambor", hint: "Golpe" },
+  { word: "Pandereta", hint: "Mano" },
+
+  // Nuevas palabras - Ropa y accesorios
+  { word: "Corbata", hint: "Cuello" },
+  { word: "Cinturón", hint: "Hebilla" },
+  { word: "Bufanda", hint: "Invierno" },
+  { word: "Guantes", hint: "Dedos" },
+  { word: "Sombrero", hint: "Cabeza" },
+  { word: "Zapatillas", hint: "Deporte" },
+  { word: "Pijama", hint: "Dormir" },
+  { word: "Bañador", hint: "Playa" },
+  { word: "Pendientes", hint: "Orejas" },
+  { word: "Pulsera", hint: "Muñeca" },
+
+  // Nuevas palabras - Juegos y entretenimiento
+  { word: "Dominó", hint: "Fichas" },
+  { word: "Parchís", hint: "Dados" },
+  { word: "Ruleta", hint: "Gira" },
+  { word: "Cometa", hint: "Viento" },
+  { word: "Yoyó", hint: "Cuerda" },
+  { word: "Puzle", hint: "Piezas" },
+  { word: "Karaoke", hint: "Cantar" },
+  { word: "Videojuego", hint: "Mando" },
+  { word: "Muñeca", hint: "Juguete" },
+  { word: "Peluche", hint: "Suave" },
 ];
 
 // Categorías con palabras específicas
