@@ -12,7 +12,7 @@ import { initializeGame, MIN_PLAYERS, MAX_PLAYERS } from '@/lib/game-logic';
 import { CATEGORIES } from '@/lib/words';
 import type { GameMode, CategoryType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Play, PlusCircle, Trash2, ArrowLeft, Sparkles, Target, Grid3X3, HelpCircle } from 'lucide-react';
+import { Users, Play, PlusCircle, Trash2, ArrowLeft, Target, Grid3X3, HelpCircle } from 'lucide-react';
 
 type SetupPhase = 'modeSelect' | 'categorySelect' | 'playerSetup';
 
@@ -226,17 +226,12 @@ export default function GameSetup() {
               <button
                 key={cat.id}
                 onClick={() => handleCategorySelect(cat.id)}
-                className="group"
+                className="group aspect-square"
               >
-                <Card className={`border-2 ${cat.id === 'football' ? 'border-green-500/50 hover:border-green-500' : 'border-border hover:border-primary'} bg-card hover:bg-primary/5 transition-all duration-200 cursor-pointer transform hover:scale-[1.02]`}>
-                  <CardContent className="p-4 flex flex-col items-center gap-2">
-                    <span className="text-3xl">{cat.icon}</span>
+                <Card className="border-2 border-border hover:border-primary bg-card hover:bg-primary/5 transition-all duration-200 cursor-pointer transform hover:scale-[1.02] h-full">
+                  <CardContent className="p-4 flex flex-col items-center justify-center gap-2 h-full">
+                    <span className="text-4xl">{cat.icon}</span>
                     <span className="font-semibold text-foreground">{cat.name}</span>
-                    {cat.id === 'football' && (
-                      <span className="text-xs text-green-500 flex items-center gap-1">
-                        <Sparkles className="w-3 h-3" /> Popular
-                      </span>
-                    )}
                   </CardContent>
                 </Card>
               </button>

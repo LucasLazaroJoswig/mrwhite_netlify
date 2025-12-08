@@ -7,7 +7,7 @@ import type { GameData, Player } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Eye, CheckCircle, RotateCcw, Home, User, Crown, AlertTriangle, PartyPopper, Skull, ChevronRight, Users } from 'lucide-react';
+import { Eye, CheckCircle, RotateCcw, Home, User, Crown, AlertTriangle, Skull, ChevronRight, Users, HelpCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { resetGameWithSamePlayers } from '@/lib/game-logic';
 import { CATEGORIES } from '@/lib/words';
@@ -21,6 +21,9 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [showWordModal, setShowWordModal] = useState(false);
   const [playerForModal, setPlayerForModal] = useState<Player | null>(null);
+  const [showRemindModal, setShowRemindModal] = useState(false);
+  const [showRemindWordModal, setShowRemindWordModal] = useState(false);
+  const [remindPlayer, setRemindPlayer] = useState<Player | null>(null);
 
   const allPlayersRevealed = gameData.players.every(p => p.wordRevealed);
 
@@ -74,6 +77,17 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
       return cat ? `${cat.icon} ${cat.name}` : '';
     }
     return '';
+  };
+
+  const handleSelectPlayerToRemind = (player: Player) => {
+    setRemindPlayer(player);
+    setShowRemindModal(false);
+    setShowRemindWordModal(true);
+  };
+
+  const handleCloseRemindWord = () => {
+    setShowRemindWordModal(false);
+    setTimeout(() => setRemindPlayer(null), 200);
   };
 
   // Word Reveal Phase
@@ -297,8 +311,113 @@ export default function GameDisplay({ gameData, setGameData }: GameDisplayProps)
             >
               <Skull className="mr-2 h-5 w-5" /> Revelar Impostor
             </Button>
+
+            <Button
+              onClick={() => setShowRemindModal(true)}
+              variant="outline"
+              className="w-full text-muted-foreground border-muted-foreground/30 hover:bg-secondary/50"
+            >
+              <HelpCircle className="mr-2 h-4 w-4" /> ¿Olvidaste tu palabra?
+            </Button>
           </CardContent>
         </Card>
+
+        {/* Modal para seleccionar jugador */}
+        <Dialog open={showRemindModal} onOpenChange={setShowRemindModal}>
+          <DialogContent className="sm:max-w-sm bg-card border-2 border-primary/50">
+            <DialogHeader className="text-center">
+              <div className="text-4xl mb-2">🤔</div>
+              <DialogTitle className="text-xl font-bold">¿Quién eres?</DialogTitle>
+              <DialogDescription>
+                Selecciona tu nombre para ver tu carta de nuevo
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-2 py-4">
+              {gameData.players.map((player) => (
+                <Button
+                  key={player.id}
+                  variant="outline"
+                  className="w-full justify-start text-left h-auto py-3 hover:bg-accent/20 hover:border-accent"
+                  onClick={() => handleSelectPlayerToRemind(player)}
+                >
+                  <User className="mr-3 h-5 w-5 text-muted-foreground" />
+                  <span className="font-medium">{player.name}</span>
+                </Button>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal para mostrar la palabra */}
+        <Dialog open={showRemindWordModal} onOpenChange={setShowRemindWordModal}>
+          <DialogContent className="sm:max-w-sm bg-card border-2 border-primary/50">
+            {remindPlayer && (
+              <>
+                <DialogHeader className="text-center">
+                  <div className={`text-6xl mb-4 ${remindPlayer.isImpostor ? 'animate-pulse' : ''}`}>
+                    {remindPlayer.isImpostor ? '🎭' : '👤'}
+                  </div>
+                  <DialogTitle className={`text-3xl font-black ${
+                    remindPlayer.isImpostor ? 'text-red-500' : 'text-primary'
+                  }`}>
+                    {remindPlayer.isImpostor ? '¡IMPOSTOR!' : 'CIVIL'}
+                  </DialogTitle>
+                  <DialogDescription className="text-muted-foreground mt-2">
+                    {remindPlayer.isImpostor
+                      ? 'No sabes la palabra. ¡Intenta descubrirla sin que te pillen!'
+                      : 'Tu palabra secreta es:'
+                    }
+                  </DialogDescription>
+                </DialogHeader>
+
+                {!remindPlayer.isImpostor ? (
+                  <div className="my-6 p-6 bg-primary/10 border-2 border-primary/30 rounded-2xl text-center">
+                    <p className="text-4xl font-black text-primary break-all">
+                      {remindPlayer.word}
+                    </p>
+                    {gameData.subtype && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Tipo: <span className="text-accent font-semibold">{gameData.subtype}</span>
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="my-6 p-6 bg-red-500/10 border-2 border-red-500/30 rounded-2xl text-center">
+                    {gameData.gameMode === 'withHint' && gameData.hint ? (
+                      <>
+                        <p className="text-sm text-muted-foreground mb-2">Tu pista:</p>
+                        <p className="text-2xl font-bold text-red-400">{gameData.hint}</p>
+                      </>
+                    ) : gameData.gameMode === 'categories' && gameData.category ? (
+                      <>
+                        <p className="text-sm text-muted-foreground mb-2">Categoría:</p>
+                        <p className="text-2xl font-bold text-red-400">{getCategoryInfo()}</p>
+                        {gameData.subtype && (
+                          <p className="text-sm text-muted-foreground mt-2">
+                            Tipo: <span className="font-semibold">{gameData.subtype}</span>
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-xl text-red-400">
+                        No tienes ninguna pista. ¡Buena suerte!
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <DialogFooter>
+                  <Button
+                    onClick={handleCloseRemindWord}
+                    className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white text-lg py-5"
+                  >
+                    <CheckCircle className="mr-2" /> Entendido
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
