@@ -1,13 +1,22 @@
-import type { WavelengthGameData, WavelengthPlayer } from './types';
+import type { WavelengthGameData, WavelengthPlayer, WavelengthCategory, WavelengthSpectrum } from './types';
 import { getRandomSpectrum, getRandomTargetPosition } from './wavelength-spectrums';
 
 export const MIN_WAVELENGTH_PLAYERS = 2;
 export const MAX_WAVELENGTH_PLAYERS = 12;
 export const DEFAULT_MAX_ROUNDS = 5;
 
+export interface WavelengthGameOptions {
+  playerNames: string[];
+  maxRounds?: number;
+  category: WavelengthCategory;
+  customSpectrums?: WavelengthSpectrum[];
+}
+
 export function initializeWavelengthGame(
   playerNames: string[],
-  maxRounds?: number
+  maxRounds?: number,
+  category: WavelengthCategory = 'classic',
+  customSpectrums?: WavelengthSpectrum[]
 ): WavelengthGameData {
   if (playerNames.length < MIN_WAVELENGTH_PLAYERS || playerNames.length > MAX_WAVELENGTH_PLAYERS) {
     throw new Error(`El número de jugadores debe estar entre ${MIN_WAVELENGTH_PLAYERS} y ${MAX_WAVELENGTH_PLAYERS}`);
@@ -23,7 +32,7 @@ export function initializeWavelengthGame(
 
   return {
     players,
-    currentSpectrum: getRandomSpectrum(),
+    currentSpectrum: getRandomSpectrum(category, customSpectrums),
     targetPosition: getRandomTargetPosition(),
     teamGuess: undefined,
     psychicClue: undefined,
@@ -31,6 +40,8 @@ export function initializeWavelengthGame(
     currentPsychicIndex: 0,
     roundNumber: 1,
     maxRounds: maxRounds || DEFAULT_MAX_ROUNDS,
+    category,
+    customSpectrums,
   };
 }
 
@@ -46,7 +57,7 @@ export function startNextRound(gameData: WavelengthGameData): WavelengthGameData
   return {
     ...gameData,
     players: updatedPlayers,
-    currentSpectrum: getRandomSpectrum(),
+    currentSpectrum: getRandomSpectrum(gameData.category, gameData.customSpectrums),
     targetPosition: getRandomTargetPosition(),
     teamGuess: undefined,
     psychicClue: undefined,
@@ -78,5 +89,5 @@ export function getScoreLabel(score: number): string {
 
 export function resetWavelengthGame(gameData: WavelengthGameData): WavelengthGameData {
   const playerNames = gameData.players.map(p => p.name);
-  return initializeWavelengthGame(playerNames, gameData.maxRounds);
+  return initializeWavelengthGame(playerNames, gameData.maxRounds, gameData.category, gameData.customSpectrums);
 }

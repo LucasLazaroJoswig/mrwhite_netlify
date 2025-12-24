@@ -1,5 +1,39 @@
-import type { WavelengthSpectrum } from './types';
+import type { WavelengthSpectrum, WavelengthCategory } from './types';
 
+// ============ FOOTBALL SPECTRUMS ============
+export const FOOTBALL_SPECTRUMS: WavelengthSpectrum[] = [
+  // Player evaluation
+  { id: 'fb-overrated-underrated', leftLabel: 'Sobrevalorado', rightLabel: 'Infravalorado' },
+  { id: 'fb-legendary-forgotten', leftLabel: 'Leyenda', rightLabel: 'Olvidado' },
+  { id: 'fb-technical-physical', leftLabel: 'Técnico', rightLabel: 'Físico' },
+  { id: 'fb-consistent-inconsistent', leftLabel: 'Constante', rightLabel: 'Irregular' },
+  { id: 'fb-team-individual', leftLabel: 'Jugador de equipo', rightLabel: 'Individualista' },
+
+  // Team evaluation
+  { id: 'fb-big-small', leftLabel: 'Equipo grande', rightLabel: 'Equipo chico' },
+  { id: 'fb-offensive-defensive', leftLabel: 'Ofensivo', rightLabel: 'Defensivo' },
+  { id: 'fb-academy-signings', leftLabel: 'Cantera', rightLabel: 'Fichajes' },
+  { id: 'fb-boring-entertaining', leftLabel: 'Aburrido', rightLabel: 'Entretenido' },
+  { id: 'fb-historic-modern', leftLabel: 'Histórico', rightLabel: 'Nuevo rico' },
+
+  // Moments & Events
+  { id: 'fb-iconic-forgettable', leftLabel: 'Momento olvidable', rightLabel: 'Momento icónico' },
+  { id: 'fb-robbery-deserved', leftLabel: 'Robo', rightLabel: 'Merecido' },
+  { id: 'fb-flop-success', leftLabel: 'Fracaso total', rightLabel: 'Éxito absoluto' },
+  { id: 'fb-worst-best', leftLabel: 'Peor fichaje', rightLabel: 'Mejor fichaje' },
+
+  // Style & Culture
+  { id: 'fb-toxic-healthy', leftLabel: 'Afición tóxica', rightLabel: 'Afición sana' },
+  { id: 'fb-cold-passionate', leftLabel: 'Estadio frío', rightLabel: 'Estadio caliente' },
+  { id: 'fb-plastic-authentic', leftLabel: 'Club plástico', rightLabel: 'Club auténtico' },
+  { id: 'fb-ugly-beautiful', leftLabel: 'Equipación fea', rightLabel: 'Equipación bonita' },
+
+  // Competition & Results
+  { id: 'fb-easy-difficult', leftLabel: 'Grupo fácil', rightLabel: 'Grupo de la muerte' },
+  { id: 'fb-weak-strong', leftLabel: 'Liga débil', rightLabel: 'Liga fuerte' },
+];
+
+// ============ CLASSIC SPECTRUMS ============
 export const WAVELENGTH_SPECTRUMS: WavelengthSpectrum[] = [
   // Temperature & Sensation
   { id: 'hot-cold', leftLabel: 'Frío', rightLabel: 'Caliente' },
@@ -85,9 +119,25 @@ export const WAVELENGTH_SPECTRUMS: WavelengthSpectrum[] = [
   { id: 'risky-safe', leftLabel: 'Arriesgado', rightLabel: 'Seguro' },
 ];
 
-export function getRandomSpectrum(): WavelengthSpectrum {
-  const randomIndex = Math.floor(Math.random() * WAVELENGTH_SPECTRUMS.length);
-  return WAVELENGTH_SPECTRUMS[randomIndex];
+export function getSpectrumsByCategory(category: WavelengthCategory): WavelengthSpectrum[] {
+  switch (category) {
+    case 'football':
+      return FOOTBALL_SPECTRUMS;
+    case 'classic':
+    default:
+      return WAVELENGTH_SPECTRUMS;
+  }
+}
+
+export function getRandomSpectrum(category: WavelengthCategory = 'classic', customSpectrums?: WavelengthSpectrum[]): WavelengthSpectrum {
+  if (category === 'custom' && customSpectrums && customSpectrums.length > 0) {
+    const randomIndex = Math.floor(Math.random() * customSpectrums.length);
+    return customSpectrums[randomIndex];
+  }
+
+  const spectrums = getSpectrumsByCategory(category);
+  const randomIndex = Math.floor(Math.random() * spectrums.length);
+  return spectrums[randomIndex];
 }
 
 export function getRandomTargetPosition(): number {

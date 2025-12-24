@@ -86,6 +86,8 @@ export interface SpyfallGameData {
 
 // ============ WAVELENGTH TYPES ============
 
+export type WavelengthCategory = 'classic' | 'football' | 'custom';
+
 export interface WavelengthSpectrum {
   id: string;
   leftLabel: string;  // e.g., "Frío"
@@ -111,4 +113,6 @@ export interface WavelengthGameData {
   currentPsychicIndex: number;
   roundNumber: number;
   maxRounds: number;
+  category: WavelengthCategory;
+  customSpectrums?: WavelengthSpectrum[]; // For custom mode
 }
