@@ -1,4 +1,8 @@
 
+// Main game types
+export type GameType = 'impostor' | 'spyfall' | 'wavelength';
+
+// Impostor game modes
 export type GameMode = 'classic' | 'withHint' | 'categories' | 'hiddenOpinion';
 
 export type CategoryType = 'football' | 'movies' | 'music' | 'food' | 'countries' | 'animals' | 'professions' | 'sports';
@@ -49,4 +53,62 @@ export interface GameData {
   // For hiddenOpinion mode
   civilQuestion?: string;
   impostorQuestion?: string;
+}
+
+// ============ SPYFALL TYPES ============
+
+export interface SpyfallLocation {
+  id: string;
+  name: string;
+  icon: string;
+  roles: string[]; // Possible roles at this location
+}
+
+export interface SpyfallPlayer {
+  id: string;
+  name: string;
+  isSpy: boolean;
+  role?: string; // Role at the location (only for non-spies)
+  locationRevealed: boolean;
+}
+
+export type SpyfallPhase = 'playerSetup' | 'locationReveal' | 'playing' | 'voting' | 'results';
+
+export interface SpyfallGameData {
+  players: SpyfallPlayer[];
+  location: SpyfallLocation;
+  allLocations: SpyfallLocation[]; // All possible locations (for spy reference)
+  gamePhase: SpyfallPhase;
+  spyName?: string;
+  timerSeconds?: number; // Optional timer
+  startTime?: number;
+}
+
+// ============ WAVELENGTH TYPES ============
+
+export interface WavelengthSpectrum {
+  id: string;
+  leftLabel: string;  // e.g., "Frío"
+  rightLabel: string; // e.g., "Caliente"
+}
+
+export interface WavelengthPlayer {
+  id: string;
+  name: string;
+  score: number;
+  isPsychic: boolean;
+}
+
+export type WavelengthPhase = 'playerSetup' | 'psychicReveal' | 'psychicTurn' | 'teamGuess' | 'reveal' | 'results';
+
+export interface WavelengthGameData {
+  players: WavelengthPlayer[];
+  currentSpectrum: WavelengthSpectrum;
+  targetPosition: number; // 0-100, where the target is on the spectrum
+  teamGuess?: number; // 0-100, where the team guessed
+  psychicClue?: string; // The clue given by the psychic
+  gamePhase: WavelengthPhase;
+  currentPsychicIndex: number;
+  roundNumber: number;
+  maxRounds: number;
 }
