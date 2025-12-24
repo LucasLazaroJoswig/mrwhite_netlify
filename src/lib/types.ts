@@ -1,5 +1,5 @@
 
-export type GameMode = 'classic' | 'withHint' | 'categories';
+export type GameMode = 'classic' | 'withHint' | 'categories' | 'hiddenOpinion';
 
 export type CategoryType = 'football' | 'movies' | 'music' | 'food' | 'countries' | 'animals' | 'professions' | 'sports';
 
@@ -16,6 +16,13 @@ export interface Category {
   words: CategoryWord[];
 }
 
+// Interface for opinion questions (hiddenOpinion mode)
+export interface OpinionQuestion {
+  id: string;
+  civilQuestion: string;      // Question for civilians
+  impostorQuestion: string;   // Different question for impostor
+}
+
 export interface Player {
   id: string;
   name: string;
@@ -23,9 +30,10 @@ export interface Player {
   isImpostor: boolean;
   wordRevealed: boolean;
   isStartingPlayer: boolean;
+  answer?: string; // For hiddenOpinion mode - player's answer to their question
 }
 
-export type GamePhase = 'setup' | 'modeSelect' | 'categorySelect' | 'playerSetup' | 'wordReveal' | 'playing' | 'voting' | 'results';
+export type GamePhase = 'setup' | 'modeSelect' | 'categorySelect' | 'playerSetup' | 'wordReveal' | 'playing' | 'voting' | 'results' | 'answerReveal';
 
 export interface GameData {
   players: Player[];
@@ -38,4 +46,7 @@ export interface GameData {
   impostorName?: string;
   startingPlayerName?: string;
   votedPlayerId?: string;
+  // For hiddenOpinion mode
+  civilQuestion?: string;
+  impostorQuestion?: string;
 }

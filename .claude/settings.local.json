@@ -5,7 +5,8 @@
       "Bash(npm run build:*)",
       "Bash(npx next build)",
       "Bash(curl:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(./node_modules/.bin/next build:*)"
     ],
     "deny": [],
     "ask": []

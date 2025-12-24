@@ -12,7 +12,7 @@ import { initializeGame, MIN_PLAYERS, MAX_PLAYERS } from '@/lib/game-logic';
 import { CATEGORIES } from '@/lib/words';
 import type { GameMode, CategoryType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Play, PlusCircle, Trash2, ArrowLeft, Target, Grid3X3, HelpCircle } from 'lucide-react';
+import { Users, Play, PlusCircle, Trash2, ArrowLeft, Target, Grid3X3, HelpCircle, MessageCircleQuestion } from 'lucide-react';
 
 type SetupPhase = 'modeSelect' | 'categorySelect' | 'playerSetup';
 
@@ -119,6 +119,8 @@ export default function GameSetup() {
         return 'El impostor recibe una pista vaga. Ideal para pocos jugadores.';
       case 'categories':
         return 'Elige una categoría temática. El impostor sabrá la categoría.';
+      case 'hiddenOpinion':
+        return 'Todos responden una pregunta. El impostor recibe una diferente.';
     }
   };
 
@@ -187,6 +189,31 @@ export default function GameSetup() {
                 <div className="text-left flex-1">
                   <h3 className="text-lg font-bold text-foreground">Categorías</h3>
                   <p className="text-sm text-muted-foreground">{getModeDescription('categories')}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </button>
+
+          {/* Hidden Opinion Mode */}
+          <button
+            onClick={() => handleModeSelect('hiddenOpinion')}
+            className="w-full group"
+          >
+            <Card className="border-2 border-violet-500/30 hover:border-violet-500 bg-card hover:bg-violet-500/5 transition-all duration-300 cursor-pointer transform hover:scale-[1.02] relative overflow-hidden">
+              {/* Decorative elements */}
+              <div className="absolute -right-4 -top-4 w-16 h-16 bg-violet-500/10 rounded-full blur-xl" />
+              <div className="absolute -left-2 -bottom-2 w-12 h-12 bg-violet-400/10 rounded-full blur-lg" />
+
+              <CardContent className="p-6 flex items-center gap-4 relative z-10">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-500/20 to-violet-600/30 flex items-center justify-center group-hover:from-violet-500/30 group-hover:to-violet-600/40 transition-all shadow-lg shadow-violet-500/10">
+                  <MessageCircleQuestion className="w-7 h-7 text-violet-500" />
+                </div>
+                <div className="text-left flex-1">
+                  <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                    Opinión Oculta
+                    <span className="text-[10px] font-medium bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded-full">NUEVO</span>
+                  </h3>
+                  <p className="text-sm text-muted-foreground">{getModeDescription('hiddenOpinion')}</p>
                 </div>
               </CardContent>
             </Card>
@@ -260,9 +287,13 @@ export default function GameSetup() {
               <div className={`px-3 py-1 rounded-full text-xs font-medium ${
                 gameMode === 'classic' ? 'bg-primary/20 text-primary' :
                 gameMode === 'withHint' ? 'bg-accent/20 text-accent' :
+                gameMode === 'hiddenOpinion' ? 'bg-violet-500/20 text-violet-400' :
                 'bg-green-500/20 text-green-500'
               }`}>
-                {gameMode === 'classic' ? 'Clásico' : gameMode === 'withHint' ? 'Con Pista' : `${CATEGORIES.find(c => c.id === category)?.icon} ${CATEGORIES.find(c => c.id === category)?.name}`}
+                {gameMode === 'classic' ? 'Clásico' :
+                 gameMode === 'withHint' ? 'Con Pista' :
+                 gameMode === 'hiddenOpinion' ? '💬 Opinión Oculta' :
+                 `${CATEGORIES.find(c => c.id === category)?.icon} ${CATEGORIES.find(c => c.id === category)?.name}`}
               </div>
             </div>
             <CardTitle className="text-2xl font-bold text-foreground">

@@ -324,6 +324,126 @@ export const GENERAL_WORDS: CategoryWord[] = [
   { word: "Diente", hint: "Boca" },
   { word: "Uña", hint: "Dedo" },
   { word: "Pelo", hint: "Cabeza" },
+
+  // Nuevas palabras - Miscelánea
+  { word: "Calendario", hint: "Pared" },
+  { word: "Diccionario", hint: "Palabras" },
+  { word: "Enciclopedia", hint: "Saber" },
+  { word: "Microscopio", hint: "Pequeño" },
+  { word: "Telescopio", hint: "Estrellas" },
+  { word: "Binoculares", hint: "Lejos" },
+  { word: "Extintor", hint: "Rojo" },
+  { word: "Candado", hint: "Cerrar" },
+  { word: "Cenicero", hint: "Humo" },
+  { word: "Florero", hint: "Agua" },
+
+  // Nuevas palabras - Herramientas
+  { word: "Destornillador", hint: "Girar" },
+  { word: "Taladro", hint: "Agujero" },
+  { word: "Serrucho", hint: "Cortar" },
+  { word: "Llave inglesa", hint: "Tuerca" },
+  { word: "Alicates", hint: "Apretar" },
+  { word: "Cinta métrica", hint: "Medir" },
+  { word: "Nivel", hint: "Recto" },
+  { word: "Brocha", hint: "Pintar" },
+  { word: "Rodillo", hint: "Pared" },
+  { word: "Escalera", hint: "Subir" },
+
+  // Nuevas palabras - Naturaleza y jardín
+  { word: "Maceta", hint: "Planta" },
+  { word: "Regadera", hint: "Agua" },
+  { word: "Tijeras de podar", hint: "Cortar" },
+  { word: "Rastrillo", hint: "Hojas" },
+  { word: "Pala", hint: "Cavar" },
+  { word: "Carretilla", hint: "Rueda" },
+  { word: "Semilla", hint: "Crecer" },
+  { word: "Abono", hint: "Tierra" },
+  { word: "Césped", hint: "Verde" },
+  { word: "Rocío", hint: "Mañana" },
+
+  // Nuevas palabras - Oficina y escuela
+  { word: "Grapadora", hint: "Metal" },
+  { word: "Perforadora", hint: "Agujero" },
+  { word: "Carpeta", hint: "Papeles" },
+  { word: "Archivador", hint: "Orden" },
+  { word: "Pizarra", hint: "Tiza" },
+  { word: "Proyector", hint: "Imagen" },
+  { word: "Rotulador", hint: "Color" },
+  { word: "Compás", hint: "Círculo" },
+  { word: "Escuadra", hint: "Ángulo" },
+  { word: "Transportador", hint: "Grados" },
+
+  // Nuevas palabras - Electrónica
+  { word: "Altavoz", hint: "Sonido" },
+  { word: "Micrófono", hint: "Voz" },
+  { word: "Control remoto", hint: "Botones" },
+  { word: "Batería", hint: "Energía" },
+  { word: "Enchufe", hint: "Pared" },
+  { word: "Interruptor", hint: "Luz" },
+  { word: "Bombilla", hint: "Filamento" },
+  { word: "Ventilador", hint: "Aire" },
+  { word: "Aire acondicionado", hint: "Frío" },
+  { word: "Radiador", hint: "Calor" },
+
+  // Palabras divertidas - Familia y relaciones
+  { word: "Suegra", hint: "Familia" },
+  { word: "Cuñado", hint: "Navidad" },
+  { word: "Ex", hint: "Pasado" },
+  { word: "Crush", hint: "Secreto" },
+  { word: "Friendzone", hint: "Dolor" },
+  { word: "Tinder", hint: "Deslizar" },
+  { word: "Boda", hint: "Caro" },
+  { word: "Divorcio", hint: "Abogado" },
+  { word: "Bebé", hint: "Llanto" },
+  { word: "Adolescente", hint: "Drama" },
+
+  // Palabras divertidas - Situaciones incómodas
+  { word: "Pedo", hint: "Sonido" },
+  { word: "Eructo", hint: "Gas" },
+  { word: "Ronquido", hint: "Noche" },
+  { word: "Resaca", hint: "Domingo" },
+  { word: "Cruda", hint: "Arrepentimiento" },
+  { word: "Vómito", hint: "Mareo" },
+  { word: "Diarrea", hint: "Urgencia" },
+  { word: "Granos", hint: "Cara" },
+  { word: "Caspa", hint: "Hombros" },
+  { word: "Sudor", hint: "Verano" },
+
+  // Palabras divertidas - Cosas random
+  { word: "Calvo", hint: "Brillo" },
+  { word: "Peluca", hint: "Falso" },
+  { word: "Bigote", hint: "Años 80" },
+  { word: "Moño", hint: "Abuela" },
+  { word: "Tanga", hint: "Playa" },
+  { word: "Calcetines", hint: "Regalo" },
+  { word: "Chanclas", hint: "Padre" },
+  { word: "Crocs", hint: "Feo" },
+  { word: "Fanny pack", hint: "Turista" },
+  { word: "Mullet", hint: "Pelo" },
+
+  // Palabras divertidas - Comida graciosa
+  { word: "Kebab", hint: "Noche" },
+  { word: "Churros", hint: "Madrugada" },
+  { word: "Sobras", hint: "Tupper" },
+  { word: "Microondas", hint: "Soltero" },
+  { word: "Ramen instantáneo", hint: "Estudiante" },
+  { word: "All you can eat", hint: "Reto" },
+  { word: "Picante", hint: "Arrepentimiento" },
+  { word: "Ajo", hint: "Aliento" },
+  { word: "Cebolla", hint: "Lágrimas" },
+  { word: "Café solo", hint: "Lunes" },
+
+  // Palabras divertidas - Vida moderna
+  { word: "WiFi", hint: "Necesidad" },
+  { word: "Batería baja", hint: "Pánico" },
+  { word: "Lunes", hint: "Depresión" },
+  { word: "Viernes", hint: "Alegría" },
+  { word: "Alarma", hint: "Odio" },
+  { word: "Atasco", hint: "Rabia" },
+  { word: "IKEA", hint: "Pelea" },
+  { word: "Black Friday", hint: "Locura" },
+  { word: "Gimnasio enero", hint: "Mentira" },
+  { word: "Dieta", hint: "Lunes" },
 ];
 
 // Categorías con palabras específicas
@@ -1123,15 +1243,25 @@ export const CATEGORIES: Category[] = [
 ];
 
 export function getRandomWord(mode: 'classic' | 'withHint' | 'categories', categoryId?: string): CategoryWord {
+  // Import dynamically to avoid SSR issues
+  const { filterUnplayedWords, markWordAsPlayed } = require('./game-history');
+
   if (mode === 'categories' && categoryId) {
     const category = CATEGORIES.find(c => c.id === categoryId);
     if (category && category.words.length > 0) {
-      return category.words[Math.floor(Math.random() * category.words.length)];
+      // Filter out played words
+      const unplayedWords = filterUnplayedWords(category.words);
+      const selectedWord = unplayedWords[Math.floor(Math.random() * unplayedWords.length)];
+      markWordAsPlayed(selectedWord.word);
+      return selectedWord;
     }
   }
 
   // Para classic y withHint usamos las palabras generales
-  return GENERAL_WORDS[Math.floor(Math.random() * GENERAL_WORDS.length)];
+  const unplayedWords = filterUnplayedWords(GENERAL_WORDS);
+  const selectedWord = unplayedWords[Math.floor(Math.random() * unplayedWords.length)];
+  markWordAsPlayed(selectedWord.word);
+  return selectedWord;
 }
 
 export function getCategoryById(id: string): Category | undefined {

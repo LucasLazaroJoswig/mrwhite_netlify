@@ -1,6 +1,7 @@
 
 import type { Player, GameData, GameMode, CategoryType } from './types';
 import { getRandomWord } from './words';
+import { getRandomQuestion } from './questions';
 
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 16;
@@ -61,11 +62,26 @@ export function initializeGame(
     throw new Error(`El número de jugadores debe estar entre ${MIN_PLAYERS} y ${MAX_PLAYERS}.`);
   }
 
-  // Obtener palabra aleatoria según el modo
-  const wordData = getRandomWord(gameMode, category);
-  const secretWord = wordData.word;
-  const hint = gameMode === 'withHint' ? wordData.hint : undefined;
-  const subtype = wordData.subtype;
+  // Variables for different modes
+  let secretWord = '';
+  let hint: string | undefined;
+  let subtype: string | undefined;
+  let civilQuestion: string | undefined;
+  let impostorQuestion: string | undefined;
+
+  // Handle hiddenOpinion mode differently
+  if (gameMode === 'hiddenOpinion') {
+    const questionData = getRandomQuestion();
+    civilQuestion = questionData.civilQuestion;
+    impostorQuestion = questionData.impostorQuestion;
+    secretWord = civilQuestion; // Use civil question as the "secret"
+  } else {
+    // Obtener palabra aleatoria según el modo
+    const wordData = getRandomWord(gameMode, category);
+    secretWord = wordData.word;
+    hint = gameMode === 'withHint' ? wordData.hint : undefined;
+    subtype = wordData.subtype;
+  }
 
   // Seleccionar impostor aleatoriamente
   const impostorIndex = Math.floor(Math.random() * numPlayers);
@@ -96,6 +112,8 @@ export function initializeGame(
     impostorName,
     startingPlayerName: startingPlayer.name,
     votedPlayerId: undefined,
+    civilQuestion,
+    impostorQuestion,
   };
 }
 
