@@ -1,471 +1,378 @@
 
 import type { OpinionQuestion } from './types';
 
-// 50 question pairs for the Hidden Opinion mode
-// Each pair has a civil question and a related but different impostor question
+// Question pairs for the Hidden Opinion mode
+// DESIGN PRINCIPLE: Both civil and impostor questions must have the SAME answer type
+// Example: Both answer with a movie name, both answer with a food, both with a country, etc.
+// This way, answers sound similar regardless of which question was asked
+
 export const OPINION_QUESTIONS: OpinionQuestion[] = [
-  // Food & Cuisine
+  // ============ SERIES & PELÍCULAS ============
   {
-    id: 'food-1',
-    civilQuestion: '¿Qué país tiene la mejor comida del mundo?',
-    impostorQuestion: '¿Qué país tiene la peor comida del mundo?',
-  },
-  {
-    id: 'food-2',
-    civilQuestion: '¿Cuál es tu comida favorita?',
-    impostorQuestion: '¿Qué comida odias con todo tu ser?',
-  },
-  {
-    id: 'food-3',
-    civilQuestion: '¿Qué restaurante recomendarías a un turista?',
-    impostorQuestion: '¿A qué restaurante nunca volverías?',
-  },
-  {
-    id: 'food-4',
-    civilQuestion: '¿Qué postre te hace más feliz?',
-    impostorQuestion: '¿Qué postre te parece asqueroso?',
-  },
-  {
-    id: 'food-5',
-    civilQuestion: '¿Qué comida pedirías en tu última cena?',
-    impostorQuestion: '¿Qué comida comerías si quisieras castigarte?',
-  },
-
-  // Travel & Places
-  {
-    id: 'travel-1',
-    civilQuestion: '¿A qué país te gustaría viajar?',
-    impostorQuestion: '¿A qué país nunca irías?',
-  },
-  {
-    id: 'travel-2',
-    civilQuestion: '¿En qué ciudad te gustaría vivir?',
-    impostorQuestion: '¿En qué ciudad sería horrible vivir?',
-  },
-  {
-    id: 'travel-3',
-    civilQuestion: '¿Cuál es tu destino de playa favorito?',
-    impostorQuestion: '¿Qué destino turístico está sobrevalorado?',
-  },
-  {
-    id: 'travel-4',
-    civilQuestion: '¿Qué monumento te gustaría visitar?',
-    impostorQuestion: '¿Qué atracción turística te parece aburrida?',
-  },
-  {
-    id: 'travel-5',
-    civilQuestion: '¿En qué país pasarías tu luna de miel?',
-    impostorQuestion: '¿Qué destino romántico te parece horrible?',
-  },
-
-  // Entertainment
-  {
-    id: 'movie-1',
-    civilQuestion: '¿Cuál es la mejor película de la historia?',
-    impostorQuestion: '¿Cuál es la película más sobrevalorada?',
-  },
-  {
-    id: 'movie-2',
+    id: 'series-1',
     civilQuestion: '¿Qué serie recomendarías a todo el mundo?',
     impostorQuestion: '¿Qué serie popular no soportas?',
   },
   {
+    id: 'series-2',
+    civilQuestion: '¿Qué serie has visto más de una vez?',
+    impostorQuestion: '¿Qué serie empezaste pero nunca terminaste?',
+  },
+  {
+    id: 'series-3',
+    civilQuestion: '¿Qué serie te enganchó desde el primer capítulo?',
+    impostorQuestion: '¿Qué serie tardaste mucho en darle una oportunidad?',
+  },
+  {
+    id: 'movie-1',
+    civilQuestion: '¿Cuál es tu película favorita de la infancia?',
+    impostorQuestion: '¿Qué película de tu infancia verías hoy?',
+  },
+  {
+    id: 'movie-2',
+    civilQuestion: '¿Qué película te hizo llorar?',
+    impostorQuestion: '¿Qué película te dejó pensando varios días?',
+  },
+  {
+    id: 'movie-3',
+    civilQuestion: '¿Qué película verías esta noche?',
+    impostorQuestion: '¿Qué película has recomendado más veces?',
+  },
+  {
+    id: 'movie-4',
+    civilQuestion: '¿Qué película te gustaría ver por primera vez otra vez?',
+    impostorQuestion: '¿Qué película te sorprendió con su final?',
+  },
+
+  // ============ COMIDA & BEBIDA ============
+  {
+    id: 'food-1',
+    civilQuestion: '¿Qué comida pedirías en tu última cena?',
+    impostorQuestion: '¿Qué comida te recuerda a tu infancia?',
+  },
+  {
+    id: 'food-2',
+    civilQuestion: '¿Qué comida podrías comer todos los días?',
+    impostorQuestion: '¿Qué comida preparas mejor?',
+  },
+  {
+    id: 'food-3',
+    civilQuestion: '¿Qué plato pedirías en un restaurante elegante?',
+    impostorQuestion: '¿Qué plato pedirías a domicilio un domingo?',
+  },
+  {
+    id: 'food-4',
+    civilQuestion: '¿Qué postre te hace más feliz?',
+    impostorQuestion: '¿Qué postre asocias con celebraciones?',
+  },
+  {
+    id: 'food-5',
+    civilQuestion: '¿Qué comida de otro país te encanta?',
+    impostorQuestion: '¿Qué comida exótica probarías?',
+  },
+  {
+    id: 'drink-1',
+    civilQuestion: '¿Cuál es tu bebida favorita?',
+    impostorQuestion: '¿Qué bebes cuando sales de fiesta?',
+  },
+  {
+    id: 'drink-2',
+    civilQuestion: '¿Qué café o té prefieres?',
+    impostorQuestion: '¿Qué pides en una cafetería?',
+  },
+
+  // ============ VIAJES & LUGARES ============
+  {
+    id: 'travel-1',
+    civilQuestion: '¿A qué país te gustaría viajar?',
+    impostorQuestion: '¿Qué país te parece el más bonito?',
+  },
+  {
+    id: 'travel-2',
+    civilQuestion: '¿En qué ciudad te gustaría vivir?',
+    impostorQuestion: '¿Qué ciudad visitarías de nuevo?',
+  },
+  {
+    id: 'travel-3',
+    civilQuestion: '¿Cuál ha sido tu viaje favorito?',
+    impostorQuestion: '¿A dónde irías en tu luna de miel?',
+  },
+  {
+    id: 'travel-4',
+    civilQuestion: '¿Qué destino de playa te gusta más?',
+    impostorQuestion: '¿Dónde pasarías unas vacaciones de verano?',
+  },
+  {
+    id: 'travel-5',
+    civilQuestion: '¿Qué monumento te gustaría visitar?',
+    impostorQuestion: '¿Qué lugar histórico te fascina?',
+  },
+  {
+    id: 'travel-6',
+    civilQuestion: '¿Dónde te gustaría jubilarte?',
+    impostorQuestion: '¿Dónde te gustaría tener una segunda residencia?',
+  },
+
+  // ============ MÚSICA & ARTISTAS ============
+  {
     id: 'music-1',
-    civilQuestion: '¿Quién es el mejor artista musical de todos los tiempos?',
-    impostorQuestion: '¿Qué artista famoso te parece terrible?',
+    civilQuestion: '¿Quién es tu artista musical favorito?',
+    impostorQuestion: '¿A qué artista te gustaría ver en concierto?',
   },
   {
     id: 'music-2',
     civilQuestion: '¿Qué canción pondrías en tu boda?',
-    impostorQuestion: '¿Qué canción famosa odias?',
+    impostorQuestion: '¿Qué canción te pone de buen humor?',
   },
   {
     id: 'music-3',
-    civilQuestion: '¿A qué concierto te gustaría ir?',
-    impostorQuestion: '¿A qué concierto no irías ni gratis?',
+    civilQuestion: '¿Qué canción tienes en bucle últimamente?',
+    impostorQuestion: '¿Qué canción te sube el ánimo cuando estás triste?',
+  },
+  {
+    id: 'music-4',
+    civilQuestion: '¿Qué álbum escucharías completo?',
+    impostorQuestion: '¿Qué álbum marcó tu adolescencia?',
+  },
+  {
+    id: 'music-5',
+    civilQuestion: '¿Qué música pondrías en una fiesta?',
+    impostorQuestion: '¿Qué música escuchas cuando estás solo?',
   },
 
-  // People & Celebrities
+  // ============ FAMOSOS & CELEBRIDADES ============
   {
     id: 'celeb-1',
     civilQuestion: '¿Con qué famoso te gustaría cenar?',
-    impostorQuestion: '¿Qué famoso te cae fatal?',
+    impostorQuestion: '¿A qué famoso te gustaría conocer?',
   },
   {
     id: 'celeb-2',
     civilQuestion: '¿Quién es el mejor deportista de la historia?',
-    impostorQuestion: '¿Qué deportista famoso está sobrevalorado?',
+    impostorQuestion: '¿Qué deportista actual admiras?',
   },
   {
     id: 'celeb-3',
     civilQuestion: '¿Quién debería ganar el próximo Balón de Oro?',
-    impostorQuestion: '¿Quién ganó un Balón de Oro sin merecerlo?',
+    impostorQuestion: '¿Quién crees que ganará el mundial?',
   },
   {
     id: 'celeb-4',
-    civilQuestion: '¿Quién es el mejor actor/actriz del momento?',
-    impostorQuestion: '¿Qué actor/actriz famoso no sabe actuar?',
+    civilQuestion: '¿Quién es el mejor actor de la historia?',
+    impostorQuestion: '¿Qué actor ves en todas sus películas?',
   },
   {
     id: 'celeb-5',
-    civilQuestion: '¿Qué influencer te parece genuino?',
-    impostorQuestion: '¿Qué influencer te parece falso?',
+    civilQuestion: '¿Qué famoso te cae muy bien?',
+    impostorQuestion: '¿A qué famoso te pareces según otros?',
   },
 
-  // Lifestyle
+  // ============ SUPERPODERES & FANTASÍA ============
   {
-    id: 'life-1',
-    civilQuestion: '¿Cuál es el mejor trabajo del mundo?',
-    impostorQuestion: '¿Cuál es el peor trabajo del mundo?',
-  },
-  {
-    id: 'life-2',
+    id: 'power-1',
     civilQuestion: '¿Qué superpoder te gustaría tener?',
-    impostorQuestion: '¿Qué superpoder sería el más inútil?',
+    impostorQuestion: '¿Qué superpoder crees que está sobrevalorado?',
   },
   {
-    id: 'life-3',
-    civilQuestion: '¿Cuál es el mejor hobby que existe?',
-    impostorQuestion: '¿Qué hobby te parece una pérdida de tiempo?',
+    id: 'power-2',
+    civilQuestion: '¿Qué superpoder sería el más útil en tu vida diaria?',
+    impostorQuestion: '¿Qué superpoder sería el más divertido?',
   },
   {
-    id: 'life-4',
-    civilQuestion: '¿Cuál sería tu coche de ensueño?',
-    impostorQuestion: '¿Qué coche famoso te parece horrible?',
+    id: 'power-3',
+    civilQuestion: '¿Qué superhéroe te gusta más?',
+    impostorQuestion: '¿Qué superhéroe serías tú?',
   },
   {
-    id: 'life-5',
-    civilQuestion: '¿Qué animal tendrías como mascota?',
-    impostorQuestion: '¿Qué animal te da miedo o asco?',
+    id: 'fantasy-1',
+    civilQuestion: '¿En qué mundo ficticio te gustaría vivir?',
+    impostorQuestion: '¿Qué universo de película/serie explorarías?',
   },
 
-  // Opinions & Preferences
+  // ============ TRABAJO & CARRERA ============
   {
-    id: 'opinion-1',
-    civilQuestion: '¿Cuál es la mejor estación del año?',
-    impostorQuestion: '¿Cuál es la peor estación del año?',
+    id: 'work-1',
+    civilQuestion: '¿Cuál sería tu trabajo soñado?',
+    impostorQuestion: '¿Qué trabajo harías gratis?',
   },
   {
-    id: 'opinion-2',
-    civilQuestion: '¿Cuál es el mejor día de la semana?',
-    impostorQuestion: '¿Cuál es el peor día de la semana?',
+    id: 'work-2',
+    civilQuestion: '¿Qué profesión te parece admirable?',
+    impostorQuestion: '¿Qué profesión elegirías si empezaras de nuevo?',
   },
   {
-    id: 'opinion-3',
-    civilQuestion: '¿Qué red social es la mejor?',
-    impostorQuestion: '¿Qué red social es la más tóxica?',
+    id: 'work-3',
+    civilQuestion: '¿Qué querías ser de pequeño?',
+    impostorQuestion: '¿Qué trabajo te parecía genial de niño?',
   },
   {
-    id: 'opinion-4',
-    civilQuestion: '¿Cuál es el mejor invento de la humanidad?',
-    impostorQuestion: '¿Qué invento ha hecho más daño a la humanidad?',
-  },
-  {
-    id: 'opinion-5',
-    civilQuestion: '¿Qué época histórica te gustaría visitar?',
-    impostorQuestion: '¿En qué época no querrías vivir jamás?',
+    id: 'work-4',
+    civilQuestion: '¿En qué empresa te gustaría trabajar?',
+    impostorQuestion: '¿Qué empresa te parece innovadora?',
   },
 
-  // Sports
+  // ============ DEPORTES ============
   {
     id: 'sports-1',
-    civilQuestion: '¿Cuál es el mejor equipo de fútbol?',
-    impostorQuestion: '¿Cuál es el equipo de fútbol más odiado?',
+    civilQuestion: '¿Cuál es tu equipo de fútbol favorito?',
+    impostorQuestion: '¿Qué equipo de fútbol respetas aunque no sea el tuyo?',
   },
   {
     id: 'sports-2',
-    civilQuestion: '¿Cuál es el deporte más emocionante?',
-    impostorQuestion: '¿Cuál es el deporte más aburrido?',
-  },
-  {
-    id: 'sports-3',
-    civilQuestion: '¿Qué Olimpiadas te gustaría haber visto en vivo?',
-    impostorQuestion: '¿Qué evento deportivo te parece sobrevalorado?',
-  },
-
-  // School & Learning
-  {
-    id: 'school-1',
-    civilQuestion: '¿Cuál era tu asignatura favorita?',
-    impostorQuestion: '¿Qué asignatura odiabas en el colegio?',
-  },
-  {
-    id: 'school-2',
-    civilQuestion: '¿Qué idioma te gustaría aprender?',
-    impostorQuestion: '¿Qué idioma te parece imposible de aprender?',
-  },
-  {
-    id: 'school-3',
-    civilQuestion: '¿Qué universidad es la mejor del mundo?',
-    impostorQuestion: '¿Qué título universitario es inútil?',
-  },
-
-  // Random & Fun
-  {
-    id: 'fun-1',
-    civilQuestion: '¿Qué harías con un millón de euros?',
-    impostorQuestion: '¿En qué nunca gastarías dinero?',
-  },
-  {
-    id: 'fun-2',
-    civilQuestion: '¿Cuál es el mejor regalo que has recibido?',
-    impostorQuestion: '¿Cuál es el peor regalo que has recibido?',
-  },
-  {
-    id: 'fun-3',
-    civilQuestion: '¿Qué aplicación del móvil usas más?',
-    impostorQuestion: '¿Qué aplicación famosa nunca usarías?',
-  },
-  {
-    id: 'fun-4',
-    civilQuestion: '¿Cuál es tu día festivo favorito?',
-    impostorQuestion: '¿Qué festividad te parece innecesaria?',
-  },
-  {
-    id: 'fun-5',
-    civilQuestion: '¿Qué programa de televisión verías todo el día?',
-    impostorQuestion: '¿Qué programa de TV no soportas?',
-  },
-
-  // Tricky Questions (harder to blend in)
-  {
-    id: 'tricky-1',
-    civilQuestion: '¿Qué edad es la mejor para casarse?',
-    impostorQuestion: '¿Cuántos hijos te gustaría tener?',
-  },
-  {
-    id: 'tricky-2',
-    civilQuestion: '¿Qué te gustaría que dijeran en tu funeral?',
-    impostorQuestion: '¿Cómo celebrarías tu 100 cumpleaños?',
-  },
-  {
-    id: 'tricky-3',
-    civilQuestion: '¿En qué gastarías tu primer sueldo?',
-    impostorQuestion: '¿Qué harías si te despidieran mañana?',
-  },
-  {
-    id: 'tricky-4',
-    civilQuestion: '¿Qué consejo le darías a tu yo de 15 años?',
-    impostorQuestion: '¿Qué le dirías a tu yo de 80 años?',
-  },
-  {
-    id: 'tricky-5',
-    civilQuestion: '¿Qué es lo primero que notas en una persona?',
-    impostorQuestion: '¿Qué cosa te hace rechazar a alguien inmediatamente?',
-  },
-
-  // More varied topics
-  {
-    id: 'varied-1',
-    civilQuestion: '¿Qué videojuego es el mejor de la historia?',
-    impostorQuestion: '¿Qué videojuego popular es una pérdida de tiempo?',
-  },
-  {
-    id: 'varied-2',
-    civilQuestion: '¿Cuál es la mejor marca de ropa?',
-    impostorQuestion: '¿Qué marca de moda está sobrevalorada?',
-  },
-  {
-    id: 'varied-3',
-    civilQuestion: '¿Qué comida rápida es tu favorita?',
-    impostorQuestion: '¿Qué cadena de comida rápida evitas?',
-  },
-  {
-    id: 'varied-4',
-    civilQuestion: '¿Cuál es tu bebida favorita?',
-    impostorQuestion: '¿Qué bebida popular no soportas?',
-  },
-
-  // NUEVAS PREGUNTAS - Variaciones más sutiles (no tan opuestas)
-
-  // Sutiles - misma temática, diferente ángulo
-  {
-    id: 'subtle-1',
-    civilQuestion: '¿Qué país tiene la mejor comida del mundo?',
-    impostorQuestion: '¿Qué país tiene la comida más exótica?',
-  },
-  {
-    id: 'subtle-2',
-    civilQuestion: '¿A qué ciudad te gustaría viajar?',
-    impostorQuestion: '¿Qué ciudad te parece más cara para vivir?',
-  },
-  {
-    id: 'subtle-3',
-    civilQuestion: '¿Cuál es tu película favorita?',
-    impostorQuestion: '¿Qué película te hizo llorar?',
-  },
-  {
-    id: 'subtle-4',
-    civilQuestion: '¿Qué superpoder te gustaría tener?',
-    impostorQuestion: '¿Qué superpoder sería el más peligroso?',
-  },
-  {
-    id: 'subtle-5',
-    civilQuestion: '¿Cuál es tu comida favorita?',
-    impostorQuestion: '¿Qué comida te recuerda a tu infancia?',
-  },
-  {
-    id: 'subtle-6',
-    civilQuestion: '¿Qué artista musical te gusta más?',
-    impostorQuestion: '¿Qué artista te gustaría ver en concierto?',
-  },
-  {
-    id: 'subtle-7',
-    civilQuestion: '¿Cuál es el mejor trabajo del mundo?',
-    impostorQuestion: '¿Qué trabajo te daría más dinero?',
-  },
-  {
-    id: 'subtle-8',
-    civilQuestion: '¿Qué animal tendrías como mascota?',
-    impostorQuestion: '¿Qué animal te parece el más inteligente?',
-  },
-  {
-    id: 'subtle-9',
-    civilQuestion: '¿Cuál es tu serie favorita?',
-    impostorQuestion: '¿Qué serie has visto más de una vez?',
-  },
-  {
-    id: 'subtle-10',
     civilQuestion: '¿Qué deporte te gusta practicar?',
     impostorQuestion: '¿Qué deporte te gusta ver por televisión?',
   },
-
-  // Perspectiva temporal diferente
   {
-    id: 'time-1',
-    civilQuestion: '¿Qué es lo primero que harías si ganaras la lotería?',
-    impostorQuestion: '¿Qué harías si solo te quedara un año de vida?',
-  },
-  {
-    id: 'time-2',
-    civilQuestion: '¿Qué te gustaría hacer este fin de semana?',
-    impostorQuestion: '¿Qué planes tienes para el próximo verano?',
-  },
-  {
-    id: 'time-3',
-    civilQuestion: '¿Cuál fue tu momento más feliz?',
-    impostorQuestion: '¿Qué momento de tu vida repetirías?',
-  },
-  {
-    id: 'time-4',
-    civilQuestion: '¿Qué querías ser de pequeño?',
-    impostorQuestion: '¿Qué carrera elegirías si pudieras empezar de nuevo?',
-  },
-  {
-    id: 'time-5',
-    civilQuestion: '¿Cuál es tu recuerdo favorito de la infancia?',
-    impostorQuestion: '¿Qué tradición familiar te gustaría mantener?',
+    id: 'sports-3',
+    civilQuestion: '¿Qué evento deportivo te gustaría ver en vivo?',
+    impostorQuestion: '¿Qué momento deportivo te encantaría haber presenciado?',
   },
 
-  // Misma pregunta con contexto diferente
+  // ============ VIDEOJUEGOS & ENTRETENIMIENTO ============
   {
-    id: 'context-1',
-    civilQuestion: '¿Qué comida pedirías en un restaurante elegante?',
-    impostorQuestion: '¿Qué comida pedirías a domicilio un domingo?',
+    id: 'games-1',
+    civilQuestion: '¿Cuál es tu videojuego favorito?',
+    impostorQuestion: '¿A qué videojuego has dedicado más horas?',
   },
   {
-    id: 'context-2',
-    civilQuestion: '¿Qué música pondrías en una fiesta?',
-    impostorQuestion: '¿Qué música escuchas cuando estás solo?',
+    id: 'games-2',
+    civilQuestion: '¿Qué videojuego recomendarías a cualquiera?',
+    impostorQuestion: '¿Qué videojuego te marcó?',
   },
   {
-    id: 'context-3',
+    id: 'games-3',
+    civilQuestion: '¿Qué juego de mesa te gusta más?',
+    impostorQuestion: '¿A qué juego nunca te cansas de jugar?',
+  },
+
+  // ============ LIBROS & LECTURA ============
+  {
+    id: 'books-1',
     civilQuestion: '¿Qué libro recomendarías a un amigo?',
     impostorQuestion: '¿Qué libro te cambió la forma de pensar?',
   },
   {
-    id: 'context-4',
-    civilQuestion: '¿Qué regalo harías a tu mejor amigo?',
-    impostorQuestion: '¿Qué regalo te gustaría recibir a ti?',
+    id: 'books-2',
+    civilQuestion: '¿Cuál es tu libro favorito?',
+    impostorQuestion: '¿Qué libro releerías?',
   },
   {
-    id: 'context-5',
-    civilQuestion: '¿Qué le dirías a tu jefe si pudieras ser sincero?',
-    impostorQuestion: '¿Qué consejo le darías a alguien que empieza a trabajar?',
-  },
-
-  // Preferencias similares pero no iguales
-  {
-    id: 'pref-1',
-    civilQuestion: '¿Playa o montaña?',
-    impostorQuestion: '¿Ciudad o pueblo?',
-  },
-  {
-    id: 'pref-2',
-    civilQuestion: '¿Perro o gato?',
-    impostorQuestion: '¿Animal grande o pequeño?',
-  },
-  {
-    id: 'pref-3',
-    civilQuestion: '¿Café o té?',
-    impostorQuestion: '¿Mañana o noche?',
-  },
-  {
-    id: 'pref-4',
-    civilQuestion: '¿Dulce o salado?',
-    impostorQuestion: '¿Frío o caliente?',
-  },
-  {
-    id: 'pref-5',
-    civilQuestion: '¿Libro o película?',
-    impostorQuestion: '¿Solo o acompañado?',
+    id: 'books-3',
+    civilQuestion: '¿Qué autor te gusta más?',
+    impostorQuestion: '¿De qué autor tienes más libros?',
   },
 
-  // Opiniones sobre la vida
+  // ============ ANIMALES ============
   {
-    id: 'life-6',
-    civilQuestion: '¿Qué es lo más importante en una relación?',
-    impostorQuestion: '¿Qué es lo que más valoras en un amigo?',
+    id: 'animals-1',
+    civilQuestion: '¿Qué animal tendrías como mascota?',
+    impostorQuestion: '¿Qué animal te parece el más inteligente?',
   },
   {
-    id: 'life-7',
-    civilQuestion: '¿Cuál es tu mayor miedo?',
-    impostorQuestion: '¿Qué riesgo te gustaría tomar?',
+    id: 'animals-2',
+    civilQuestion: '¿Qué animal te parece el más bonito?',
+    impostorQuestion: '¿Qué animal te fascina?',
   },
   {
-    id: 'life-8',
-    civilQuestion: '¿Qué te hace realmente feliz?',
-    impostorQuestion: '¿Qué te relaja después de un día duro?',
-  },
-  {
-    id: 'life-9',
-    civilQuestion: '¿Cuál es tu mayor logro?',
-    impostorQuestion: '¿De qué estás más orgulloso?',
-  },
-  {
-    id: 'life-10',
-    civilQuestion: '¿Qué te gustaría aprender?',
-    impostorQuestion: '¿Qué habilidad te gustaría tener?',
+    id: 'animals-3',
+    civilQuestion: '¿Qué animal serías si pudieras elegir?',
+    impostorQuestion: '¿Qué animal crees que representa tu personalidad?',
   },
 
-  // Hipotéticos similares
+  // ============ REDES SOCIALES & TECNOLOGÍA ============
   {
-    id: 'hypo-1',
-    civilQuestion: '¿Qué harías con un día libre inesperado?',
-    impostorQuestion: '¿Qué harías si no tuvieras que trabajar nunca más?',
+    id: 'tech-1',
+    civilQuestion: '¿Qué app usas más en el móvil?',
+    impostorQuestion: '¿Qué app no podrías dejar de usar?',
   },
   {
-    id: 'hypo-2',
+    id: 'tech-2',
+    civilQuestion: '¿Qué red social te gusta más?',
+    impostorQuestion: '¿En qué red social pasas más tiempo?',
+  },
+  {
+    id: 'tech-3',
+    civilQuestion: '¿Qué youtuber o streamer sigues?',
+    impostorQuestion: '¿Qué contenido consumes antes de dormir?',
+  },
+  {
+    id: 'tech-4',
+    civilQuestion: '¿Qué gadget no podrías vivir sin él?',
+    impostorQuestion: '¿Qué tecnología te parece imprescindible?',
+  },
+
+  // ============ EXPERIENCIAS & AVENTURAS ============
+  {
+    id: 'exp-1',
+    civilQuestion: '¿Qué es lo más loco que has hecho?',
+    impostorQuestion: '¿Qué aventura te gustaría vivir?',
+  },
+  {
+    id: 'exp-2',
+    civilQuestion: '¿Cuál es tu mejor recuerdo con amigos?',
+    impostorQuestion: '¿Qué plan harías con tus amigos este finde?',
+  },
+  {
+    id: 'exp-3',
+    civilQuestion: '¿Qué experiencia cambió tu vida?',
+    impostorQuestion: '¿Qué momento repetirías sin dudarlo?',
+  },
+  {
+    id: 'exp-4',
+    civilQuestion: '¿Qué harías si nadie te juzgara?',
+    impostorQuestion: '¿Qué harías con un día libre inesperado?',
+  },
+
+  // ============ PERSONAS & RELACIONES ============
+  {
+    id: 'people-1',
+    civilQuestion: '¿Quién te inspira?',
+    impostorQuestion: '¿A quién admiras secretamente?',
+  },
+  {
+    id: 'people-2',
+    civilQuestion: '¿Quién te conoce mejor?',
+    impostorQuestion: '¿A quién le cuentas tus problemas?',
+  },
+  {
+    id: 'people-3',
+    civilQuestion: '¿Quién te hace reír más?',
+    impostorQuestion: '¿Con quién te sientes más tú mismo?',
+  },
+  {
+    id: 'people-4',
     civilQuestion: '¿A quién invitarías a cenar de cualquier época?',
     impostorQuestion: '¿Con quién te gustaría pasar un día entero?',
   },
+
+  // ============ HIPOTÉTICOS ============
+  {
+    id: 'hypo-1',
+    civilQuestion: '¿Qué harías si ganaras la lotería?',
+    impostorQuestion: '¿En qué gastarías un millón de euros?',
+  },
+  {
+    id: 'hypo-2',
+    civilQuestion: '¿Qué harías si fueras invisible por un día?',
+    impostorQuestion: '¿Qué harías si pudieras parar el tiempo?',
+  },
   {
     id: 'hypo-3',
+    civilQuestion: '¿Qué época histórica visitarías?',
+    impostorQuestion: '¿En qué década te habría gustado vivir?',
+  },
+  {
+    id: 'hypo-4',
     civilQuestion: '¿Qué cambiarías de tu pasado?',
     impostorQuestion: '¿Qué decisión tomarías diferente?',
   },
   {
-    id: 'hypo-4',
-    civilQuestion: '¿Dónde te ves en 10 años?',
-    impostorQuestion: '¿Cómo sería tu día perfecto?',
-  },
-  {
     id: 'hypo-5',
-    civilQuestion: '¿Qué harías si fueras invisible por un día?',
-    impostorQuestion: '¿Qué harías si pudieras leer mentes?',
+    civilQuestion: '¿Qué consejo le darías a tu yo de 15 años?',
+    impostorQuestion: '¿Qué te hubiera gustado saber antes?',
   },
 
-  // Cosas cotidianas
+  // ============ VIDA COTIDIANA ============
   {
     id: 'daily-1',
     civilQuestion: '¿Cuál es tu hora favorita del día?',
@@ -483,175 +390,354 @@ export const OPINION_QUESTIONS: OpinionQuestion[] = [
   },
   {
     id: 'daily-4',
-    civilQuestion: '¿Qué app usas más en el móvil?',
-    impostorQuestion: '¿Qué app eliminarías de tu móvil?',
-  },
-  {
-    id: 'daily-5',
     civilQuestion: '¿Cuál es tu día de la semana favorito?',
     impostorQuestion: '¿Qué día de la semana eres más feliz?',
   },
 
-  // Gustos muy similares (difícil para el impostor)
+  // ============ GUSTOS PERSONALES ============
   {
-    id: 'similar-1',
+    id: 'taste-1',
     civilQuestion: '¿Cuál es tu color favorito?',
     impostorQuestion: '¿De qué color pintarías tu habitación?',
   },
   {
-    id: 'similar-2',
-    civilQuestion: '¿Cuál es tu número de la suerte?',
-    impostorQuestion: '¿Qué número elegirías para una apuesta?',
-  },
-  {
-    id: 'similar-3',
+    id: 'taste-2',
     civilQuestion: '¿Cuál es tu estación del año favorita?',
-    impostorQuestion: '¿En qué época del año naciste?',
+    impostorQuestion: '¿En qué época del año te sientes mejor?',
   },
   {
-    id: 'similar-4',
-    civilQuestion: '¿Pizza o hamburguesa?',
-    impostorQuestion: '¿Patatas fritas o ensalada?',
+    id: 'taste-3',
+    civilQuestion: '¿Qué hobby te gustaría aprender?',
+    impostorQuestion: '¿Qué habilidad te encantaría dominar?',
   },
   {
-    id: 'similar-5',
-    civilQuestion: '¿Netflix o YouTube?',
-    impostorQuestion: '¿Películas o series?',
+    id: 'taste-4',
+    civilQuestion: '¿Cuál sería tu coche de ensueño?',
+    impostorQuestion: '¿Qué coche te comprarías si pudieras?',
   },
 
-  // Experiencias personales
+  // ============ REGALOS & OCASIONES ============
   {
-    id: 'exp-1',
-    civilQuestion: '¿Cuál ha sido tu viaje favorito?',
-    impostorQuestion: '¿A dónde irías en tu luna de miel?',
+    id: 'gift-1',
+    civilQuestion: '¿Cuál es el mejor regalo que has recibido?',
+    impostorQuestion: '¿Qué regalo te gustaría recibir?',
   },
   {
-    id: 'exp-2',
-    civilQuestion: '¿Cuál es tu mejor recuerdo con amigos?',
-    impostorQuestion: '¿Qué aventura te gustaría vivir con amigos?',
+    id: 'gift-2',
+    civilQuestion: '¿Qué regalo harías a tu mejor amigo?',
+    impostorQuestion: '¿Qué regalo te encanta hacer a otros?',
   },
   {
-    id: 'exp-3',
-    civilQuestion: '¿Qué es lo más loco que has hecho?',
-    impostorQuestion: '¿Qué harías si nadie te juzgara?',
-  },
-  {
-    id: 'exp-4',
-    civilQuestion: '¿Cuál es tu anécdota más vergonzosa?',
-    impostorQuestion: '¿Qué secreto nunca has contado?',
-  },
-  {
-    id: 'exp-5',
-    civilQuestion: '¿Qué te arrepientes de no haber hecho?',
-    impostorQuestion: '¿Qué harías si pudieras volver atrás?',
+    id: 'gift-3',
+    civilQuestion: '¿Cuál es tu día festivo favorito?',
+    impostorQuestion: '¿Qué celebración disfrutas más?',
   },
 
-  // Completamente diferentes pero justificables
-  {
-    id: 'diff-1',
-    civilQuestion: '¿Qué famoso te cae bien?',
-    impostorQuestion: '¿A qué famoso te pareces físicamente?',
-  },
-  {
-    id: 'diff-2',
-    civilQuestion: '¿Cuál es tu frase motivadora favorita?',
-    impostorQuestion: '¿Cuál fue el mejor consejo que te dieron?',
-  },
-  {
-    id: 'diff-3',
-    civilQuestion: '¿Qué cosa material valoras más?',
-    impostorQuestion: '¿Qué objeto llevarías a una isla desierta?',
-  },
-  {
-    id: 'diff-4',
-    civilQuestion: '¿Cuál es tu canción favorita?',
-    impostorQuestion: '¿Qué canción te sube el ánimo?',
-  },
-  {
-    id: 'diff-5',
-    civilQuestion: '¿Qué talento oculto tienes?',
-    impostorQuestion: '¿En qué eres mejor que la mayoría?',
-  },
-
-  // Preguntas sobre gustos culturales
-  {
-    id: 'culture-1',
-    civilQuestion: '¿Qué género de película prefieres?',
-    impostorQuestion: '¿Qué película verías esta noche?',
-  },
-  {
-    id: 'culture-2',
-    civilQuestion: '¿Qué tipo de música escuchas más?',
-    impostorQuestion: '¿Qué canción tienes en bucle últimamente?',
-  },
-  {
-    id: 'culture-3',
-    civilQuestion: '¿Qué red social usas más?',
-    impostorQuestion: '¿En qué red social pasas más tiempo?',
-  },
-  {
-    id: 'culture-4',
-    civilQuestion: '¿Qué videojuego te gusta más?',
-    impostorQuestion: '¿A qué juego has dedicado más horas?',
-  },
-  {
-    id: 'culture-5',
-    civilQuestion: '¿Qué youtuber o streamer sigues?',
-    impostorQuestion: '¿Qué contenido consumes antes de dormir?',
-  },
-
-  // Sobre personas
-  {
-    id: 'people-1',
-    civilQuestion: '¿Quién es tu mejor amigo?',
-    impostorQuestion: '¿A quién llamarías en una emergencia?',
-  },
-  {
-    id: 'people-2',
-    civilQuestion: '¿Quién te inspira?',
-    impostorQuestion: '¿A quién admiras secretamente?',
-  },
-  {
-    id: 'people-3',
-    civilQuestion: '¿Con quién pasas más tiempo?',
-    impostorQuestion: '¿Con quién te gustaría pasar más tiempo?',
-  },
-  {
-    id: 'people-4',
-    civilQuestion: '¿Quién te conoce mejor?',
-    impostorQuestion: '¿A quién le cuentas tus problemas?',
-  },
-  {
-    id: 'people-5',
-    civilQuestion: '¿Quién te hace reír más?',
-    impostorQuestion: '¿Con quién te sientes más tú mismo?',
-  },
-
-  // Sobre el futuro
+  // ============ FUTURO & METAS ============
   {
     id: 'future-1',
-    civilQuestion: '¿Cómo te imaginas en 5 años?',
-    impostorQuestion: '¿Qué esperas lograr este año?',
+    civilQuestion: '¿Cómo te imaginas en 10 años?',
+    impostorQuestion: '¿Qué esperas lograr en los próximos años?',
   },
   {
     id: 'future-2',
     civilQuestion: '¿Qué objetivo tienes pendiente?',
-    impostorQuestion: '¿Qué propósito de año nuevo cumpliste?',
+    impostorQuestion: '¿Qué sueño quieres cumplir?',
   },
   {
     id: 'future-3',
-    civilQuestion: '¿Dónde te gustaría jubilarte?',
-    impostorQuestion: '¿Dónde te gustaría vivir algún día?',
+    civilQuestion: '¿Por qué te gustaría ser recordado?',
+    impostorQuestion: '¿Qué legado quieres dejar?',
+  },
+
+  // ============ PREGUNTAS INGENIOSAS - NUEVAS ============
+
+  // Respuestas tipo: Nombre de persona/personaje
+  {
+    id: 'clever-1',
+    civilQuestion: '¿Qué personaje de ficción te representa?',
+    impostorQuestion: '¿Qué personaje de ficción te gustaría ser?',
   },
   {
-    id: 'future-4',
-    civilQuestion: '¿Qué legado quieres dejar?',
-    impostorQuestion: '¿Por qué te gustaría ser recordado?',
+    id: 'clever-2',
+    civilQuestion: '¿Quién sería el padrino de tu boda?',
+    impostorQuestion: '¿Quién daría el mejor discurso en tu cumpleaños?',
   },
   {
-    id: 'future-5',
-    civilQuestion: '¿Qué te gustaría que dijera tu lápida?',
-    impostorQuestion: '¿Cuál sería tu epitafio ideal?',
+    id: 'clever-3',
+    civilQuestion: '¿Qué villano de película entiendes?',
+    impostorQuestion: '¿Qué villano te parece carismático?',
+  },
+
+  // Respuestas tipo: Lugar específico
+  {
+    id: 'clever-4',
+    civilQuestion: '¿Dónde tendrías tu primera cita ideal?',
+    impostorQuestion: '¿Dónde propondrías matrimonio?',
+  },
+  {
+    id: 'clever-5',
+    civilQuestion: '¿En qué restaurante celebrarías algo especial?',
+    impostorQuestion: '¿A qué restaurante llevarías a tus padres?',
+  },
+  {
+    id: 'clever-6',
+    civilQuestion: '¿Dónde te esconderías en un apocalipsis zombie?',
+    impostorQuestion: '¿Dónde montarías tu base secreta?',
+  },
+
+  // Respuestas tipo: Actividad/Acción
+  {
+    id: 'clever-7',
+    civilQuestion: '¿Qué harías primero en una isla desierta?',
+    impostorQuestion: '¿Qué habilidad de supervivencia te falta?',
+  },
+  {
+    id: 'clever-8',
+    civilQuestion: '¿Qué harías si te quedaran 24 horas de vida?',
+    impostorQuestion: '¿Qué harías si fuera tu último día de vacaciones?',
+  },
+  {
+    id: 'clever-9',
+    civilQuestion: '¿Qué deporte extremo probarías?',
+    impostorQuestion: '¿Qué cosa loca harías con un buen seguro?',
+  },
+
+  // Respuestas tipo: Objeto específico
+  {
+    id: 'clever-10',
+    civilQuestion: '¿Qué objeto salvarías de un incendio?',
+    impostorQuestion: '¿Qué objeto tiene más valor sentimental para ti?',
+  },
+  {
+    id: 'clever-11',
+    civilQuestion: '¿Qué llevarías a una isla desierta?',
+    impostorQuestion: '¿Sin qué objeto no puedes salir de casa?',
+  },
+  {
+    id: 'clever-12',
+    civilQuestion: '¿Qué invento te parece el más útil?',
+    impostorQuestion: '¿Qué invento crees que cambió el mundo?',
+  },
+
+  // Respuestas tipo: Comida/Bebida específica
+  {
+    id: 'clever-13',
+    civilQuestion: '¿Qué pedirías en un menú de degustación?',
+    impostorQuestion: '¿Qué plato prepararías para impresionar?',
+  },
+  {
+    id: 'clever-14',
+    civilQuestion: '¿Qué comida callejera te vuelve loco?',
+    impostorQuestion: '¿Qué snack podrías comer sin parar?',
+  },
+  {
+    id: 'clever-15',
+    civilQuestion: '¿Qué desayuno te pone de buen humor?',
+    impostorQuestion: '¿Qué comerías después de una resaca?',
+  },
+
+  // Respuestas tipo: Película/Serie específica
+  {
+    id: 'clever-16',
+    civilQuestion: '¿Qué película ves cuando estás enfermo?',
+    impostorQuestion: '¿Qué película es tu guilty pleasure?',
+  },
+  {
+    id: 'clever-17',
+    civilQuestion: '¿Qué película pondrías en un vuelo largo?',
+    impostorQuestion: '¿Qué película verías con tus abuelos?',
+  },
+  {
+    id: 'clever-18',
+    civilQuestion: '¿Qué serie verías con tu pareja?',
+    impostorQuestion: '¿Qué serie empezarías hoy?',
+  },
+
+  // Respuestas tipo: Canción/Artista
+  {
+    id: 'clever-19',
+    civilQuestion: '¿Qué canción cantarías en un karaoke?',
+    impostorQuestion: '¿Qué canción sabes de memoria?',
+  },
+  {
+    id: 'clever-20',
+    civilQuestion: '¿Qué canción pondrías en un road trip?',
+    impostorQuestion: '¿Qué canción te recuerda al verano?',
+  },
+  {
+    id: 'clever-21',
+    civilQuestion: '¿Qué canción bailarías en tu boda?',
+    impostorQuestion: '¿Qué canción te hace llorar?',
+  },
+
+  // Respuestas tipo: País/Ciudad
+  {
+    id: 'clever-22',
+    civilQuestion: '¿Dónde aprenderías un nuevo idioma?',
+    impostorQuestion: '¿En qué país vivirías un año?',
+  },
+  {
+    id: 'clever-23',
+    civilQuestion: '¿Qué ciudad tiene la mejor vida nocturna?',
+    impostorQuestion: '¿Dónde celebrarías Nochevieja?',
+  },
+  {
+    id: 'clever-24',
+    civilQuestion: '¿Qué país tiene la gente más amable?',
+    impostorQuestion: '¿Dónde te sentiste más bienvenido?',
+  },
+
+  // Respuestas tipo: Profesión/Rol
+  {
+    id: 'clever-25',
+    civilQuestion: '¿Qué serías en una película de acción?',
+    impostorQuestion: '¿Qué rol tendrías en un atraco?',
+  },
+  {
+    id: 'clever-26',
+    civilQuestion: '¿Qué serías en un grupo de supervivencia?',
+    impostorQuestion: '¿Qué aportarías en un equipo de aventura?',
+  },
+  {
+    id: 'clever-27',
+    civilQuestion: '¿Qué trabajo harías en un circo?',
+    impostorQuestion: '¿Qué talento mostrarías en un talent show?',
+  },
+
+  // Respuestas tipo: Marca/Producto
+  {
+    id: 'clever-28',
+    civilQuestion: '¿Qué marca representa tu estilo?',
+    impostorQuestion: '¿Qué tienda es tu favorita?',
+  },
+  {
+    id: 'clever-29',
+    civilQuestion: '¿Qué perfume o colonia usas?',
+    impostorQuestion: '¿Qué olor te encanta?',
+  },
+
+  // Respuestas tipo: Momento/Época
+  {
+    id: 'clever-30',
+    civilQuestion: '¿Cuál fue la mejor etapa de tu vida?',
+    impostorQuestion: '¿A qué edad eras más feliz?',
+  },
+  {
+    id: 'clever-31',
+    civilQuestion: '¿Qué año repetirías?',
+    impostorQuestion: '¿Cuándo tomaste tu mejor decisión?',
+  },
+
+  // Respuestas tipo: Celebridad
+  {
+    id: 'clever-32',
+    civilQuestion: '¿Con qué famoso irías de viaje?',
+    impostorQuestion: '¿Qué famoso sería tu compañero de piso ideal?',
+  },
+  {
+    id: 'clever-33',
+    civilQuestion: '¿Qué famoso te haría de wingman?',
+    impostorQuestion: '¿Qué famoso invitarías a tu fiesta?',
+  },
+  {
+    id: 'clever-34',
+    civilQuestion: '¿Qué actor interpretaría tu vida?',
+    impostorQuestion: '¿A qué famoso te pareces en personalidad?',
+  },
+
+  // Respuestas tipo: Habilidad/Talento
+  {
+    id: 'clever-35',
+    civilQuestion: '¿Qué instrumento tocarías?',
+    impostorQuestion: '¿Qué talento te gustaría tener de nacimiento?',
+  },
+  {
+    id: 'clever-36',
+    civilQuestion: '¿En qué idioma te gustaría soñar?',
+    impostorQuestion: '¿Qué idioma suena más bonito?',
+  },
+  {
+    id: 'clever-37',
+    civilQuestion: '¿Qué arte dominarías si tuvieras tiempo?',
+    impostorQuestion: '¿Qué habilidad impresionaría a cualquiera?',
+  },
+
+  // Respuestas tipo: Situación/Escenario
+  {
+    id: 'clever-38',
+    civilQuestion: '¿Cómo sería tu domingo perfecto?',
+    impostorQuestion: '¿Cómo sería tu día libre ideal?',
+  },
+  {
+    id: 'clever-39',
+    civilQuestion: '¿Cómo celebrarías ganar un premio?',
+    impostorQuestion: '¿Cómo te gustaría que fuera tu fiesta sorpresa?',
+  },
+  {
+    id: 'clever-40',
+    civilQuestion: '¿Dónde sería tu oficina ideal?',
+    impostorQuestion: '¿Desde dónde trabajarías si pudieras elegir?',
+  },
+
+  // Respuestas tipo: Libro/Autor
+  {
+    id: 'clever-41',
+    civilQuestion: '¿Qué libro regalarías a un desconocido?',
+    impostorQuestion: '¿Qué libro te gustaría haber escrito?',
+  },
+  {
+    id: 'clever-42',
+    civilQuestion: '¿En qué libro te gustaría vivir?',
+    impostorQuestion: '¿Qué mundo literario explorarías?',
+  },
+
+  // Respuestas tipo: Deporte/Actividad física
+  {
+    id: 'clever-43',
+    civilQuestion: '¿Qué deporte verías en las Olimpiadas?',
+    impostorQuestion: '¿En qué deporte competirías si pudieras?',
+  },
+  {
+    id: 'clever-44',
+    civilQuestion: '¿Con qué deporte desconectas?',
+    impostorQuestion: '¿Qué actividad física te hace feliz?',
+  },
+
+  // Respuestas tipo: App/Tecnología
+  {
+    id: 'clever-45',
+    civilQuestion: '¿Qué app inventarías?',
+    impostorQuestion: '¿Qué función añadirías a tu móvil?',
+  },
+  {
+    id: 'clever-46',
+    civilQuestion: '¿Qué gadget del futuro quieres ya?',
+    impostorQuestion: '¿Qué invento de ciencia ficción debería existir?',
+  },
+
+  // Respuestas tipo: Característica personal
+  {
+    id: 'clever-47',
+    civilQuestion: '¿Cuál es tu mayor virtud?',
+    impostorQuestion: '¿Por qué te contratarían?',
+  },
+  {
+    id: 'clever-48',
+    civilQuestion: '¿Qué rasgo heredaste de tu familia?',
+    impostorQuestion: '¿Qué te define según tus amigos?',
+  },
+
+  // Respuestas tipo: Miedo/Fobia
+  {
+    id: 'clever-49',
+    civilQuestion: '¿Qué miedo has superado?',
+    impostorQuestion: '¿Qué cosa te daba miedo de pequeño?',
+  },
+  {
+    id: 'clever-50',
+    civilQuestion: '¿Qué situación te pone nervioso?',
+    impostorQuestion: '¿Cuándo sudas frío?',
   },
 ];
 
