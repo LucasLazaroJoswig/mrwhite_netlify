@@ -4,7 +4,7 @@ import { getRandomWord } from './words';
 import { getRandomQuestion } from './questions';
 
 export const MIN_PLAYERS = 3;
-export const MAX_PLAYERS = 16;
+export const MAX_PLAYERS = 30;
 
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
@@ -17,22 +17,17 @@ function shuffleArray<T>(array: T[]): T[] {
 
 /**
  * Selecciona el jugador que empieza.
- * El impostor tiene ~15% menos probabilidad de empezar que los demás.
- * Ejemplo con 3 jugadores:
- *   - Normal: 33.3% cada uno
- *   - Con ajuste: impostor ~28%, otros ~36% cada uno
+ * Los impostores tienen ~15% menos probabilidad de empezar que los demás.
  */
 function selectStartingPlayer(players: Player[]): Player {
-  const impostorIndex = players.findIndex(p => p.isImpostor);
   const numPlayers = players.length;
+  const impostorCount = players.filter(p => p.isImpostor).length;
 
-  // Factor de reducción para el impostor (0.85 = 15% menos probabilidad)
+  // Factor de reducción para los impostores (0.85 = 15% menos probabilidad)
   const impostorFactor = 0.85;
 
   // Calcular pesos
-  // Si todos tuvieran peso 1, el total sería numPlayers
-  // Con el ajuste, el impostor tiene peso impostorFactor
-  const totalWeight = (numPlayers - 1) + impostorFactor;
+  const totalWeight = (numPlayers - impostorCount) + (impostorCount * impostorFactor);
 
   // Generar número aleatorio
   const random = Math.random() * totalWeight;
@@ -40,7 +35,7 @@ function selectStartingPlayer(players: Player[]): Player {
   // Calcular índice basado en pesos
   let cumulative = 0;
   for (let i = 0; i < players.length; i++) {
-    const weight = i === impostorIndex ? impostorFactor : 1;
+    const weight = players[i].isImpostor ? impostorFactor : 1;
     cumulative += weight;
     if (random < cumulative) {
       return players[i];
@@ -54,13 +49,18 @@ function selectStartingPlayer(players: Player[]): Player {
 export function initializeGame(
   playerNames: string[],
   gameMode: GameMode,
-  category?: CategoryType
+  category?: CategoryType,
+  impostorCount: number = 1
 ): GameData {
   const numPlayers = playerNames.length;
 
   if (numPlayers < MIN_PLAYERS || numPlayers > MAX_PLAYERS) {
     throw new Error(`El número de jugadores debe estar entre ${MIN_PLAYERS} y ${MAX_PLAYERS}.`);
   }
+
+  // Validar que el número de impostores sea válido
+  const maxImpostors = numPlayers - 1; // Al menos un civil
+  const validImpostorCount = Math.min(Math.max(1, impostorCount), maxImpostors);
 
   // Variables for different modes
   let secretWord = '';
@@ -83,21 +83,22 @@ export function initializeGame(
     subtype = wordData.subtype;
   }
 
-  // Seleccionar impostor aleatoriamente
-  const impostorIndex = Math.floor(Math.random() * numPlayers);
-  const impostorName = playerNames[impostorIndex];
+  // Seleccionar impostores aleatoriamente
+  const shuffledIndices = shuffleArray([...Array(numPlayers).keys()]);
+  const impostorIndices = new Set(shuffledIndices.slice(0, validImpostorCount));
+  const impostorNames = shuffledIndices.slice(0, validImpostorCount).map(i => playerNames[i]);
 
   // Crear jugadores
   const players: Player[] = playerNames.map((name, index) => ({
     id: `player-${index}-${Date.now()}`,
     name,
-    word: index === impostorIndex ? "ERES EL IMPOSTOR" : secretWord,
-    isImpostor: index === impostorIndex,
+    word: impostorIndices.has(index) ? "ERES EL IMPOSTOR" : secretWord,
+    isImpostor: impostorIndices.has(index),
     wordRevealed: false,
     isStartingPlayer: false,
   }));
 
-  // Seleccionar quién empieza (impostor con menos probabilidad)
+  // Seleccionar quién empieza (impostores con menos probabilidad)
   const startingPlayer = selectStartingPlayer(players);
   startingPlayer.isStartingPlayer = true;
 
@@ -109,7 +110,9 @@ export function initializeGame(
     gamePhase: 'wordReveal',
     gameMode,
     category,
-    impostorName,
+    impostorName: impostorNames[0], // Mantener compatibilidad
+    impostorNames,
+    impostorCount: validImpostorCount,
     startingPlayerName: startingPlayer.name,
     votedPlayerId: undefined,
     civilQuestion,
@@ -119,5 +122,5 @@ export function initializeGame(
 
 export function resetGameWithSamePlayers(gameData: GameData): GameData {
   const playerNames = gameData.players.map(p => p.name);
-  return initializeGame(playerNames, gameData.gameMode, gameData.category);
+  return initializeGame(playerNames, gameData.gameMode, gameData.category, gameData.impostorCount);
 }

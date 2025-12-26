@@ -40,7 +40,7 @@ interface PlayerManagerProps {
 }
 
 const MIN_PLAYERS = 3;
-const MAX_PLAYERS = 16;
+const MAX_PLAYERS = 30;
 
 export default function PlayerManager({
   open,
@@ -123,15 +123,6 @@ export default function PlayerManager({
       return;
     }
 
-    if (player.isImpostor) {
-      toast({
-        title: "No se puede eliminar",
-        description: "No puedes eliminar al impostor durante la partida.",
-        duration: 3000,
-      });
-      return;
-    }
-
     setPlayerToDelete(player);
   };
 
@@ -190,9 +181,7 @@ export default function PlayerManager({
                 <div
                   key={player.id}
                   className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                    player.isImpostor
-                      ? 'bg-red-500/10 border-red-500/30'
-                      : player.isStartingPlayer
+                    player.isStartingPlayer
                       ? 'bg-accent/10 border-accent/50'
                       : 'bg-secondary/30 border-transparent'
                   }`}
@@ -231,11 +220,6 @@ export default function PlayerManager({
                       <span className="font-medium text-foreground truncate">
                         {player.name}
                       </span>
-                      {player.isImpostor && (
-                        <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">
-                          Impostor
-                        </span>
-                      )}
                       {player.isStartingPlayer && (
                         <Crown className="w-4 h-4 text-accent shrink-0" />
                       )}
@@ -264,17 +248,13 @@ export default function PlayerManager({
                       variant="ghost"
                       size="sm"
                       className={`h-8 w-8 p-0 ${
-                        player.isImpostor || gameData.players.length <= MIN_PLAYERS
+                        gameData.players.length <= MIN_PLAYERS
                           ? 'opacity-30 cursor-not-allowed'
                           : 'hover:bg-red-500/20 hover:text-red-400'
                       }`}
                       onClick={() => handleDeletePlayer(player)}
-                      disabled={player.isImpostor || gameData.players.length <= MIN_PLAYERS}
-                      title={
-                        player.isImpostor
-                          ? 'No puedes eliminar al impostor'
-                          : 'Eliminar jugador'
-                      }
+                      disabled={gameData.players.length <= MIN_PLAYERS}
+                      title="Eliminar jugador"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

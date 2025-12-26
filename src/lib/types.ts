@@ -48,6 +48,8 @@ export interface GameData {
   gameMode: GameMode;
   category?: CategoryType;
   impostorName?: string;
+  impostorNames?: string[]; // Para múltiples impostores
+  impostorCount: number; // Número de impostores
   startingPlayerName?: string;
   votedPlayerId?: string;
   // For hiddenOpinion mode

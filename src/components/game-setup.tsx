@@ -12,7 +12,7 @@ import { initializeGame, MIN_PLAYERS, MAX_PLAYERS } from '@/lib/game-logic';
 import { CATEGORIES } from '@/lib/words';
 import type { GameMode, CategoryType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Play, PlusCircle, Trash2, ArrowLeft, Target, Grid3X3, HelpCircle, MessageCircleQuestion } from 'lucide-react';
+import { Users, Play, PlusCircle, Trash2, ArrowLeft, Target, Grid3X3, HelpCircle, MessageCircleQuestion, UserX, Minus, Plus } from 'lucide-react';
 
 type SetupPhase = 'modeSelect' | 'categorySelect' | 'playerSetup';
 
@@ -21,8 +21,12 @@ export default function GameSetup() {
   const [gameMode, setGameMode] = useState<GameMode>('classic');
   const [category, setCategory] = useState<CategoryType | undefined>();
   const [playerNames, setPlayerNames] = useState<string[]>(Array(MIN_PLAYERS).fill(''));
+  const [impostorCount, setImpostorCount] = useState<number>(1);
   const router = useRouter();
   const { toast } = useToast();
+
+  // Máximo de impostores: número de jugadores - 1 (al menos un civil)
+  const maxImpostors = Math.max(1, playerNames.length - 1);
 
   const handleModeSelect = (mode: GameMode) => {
     setGameMode(mode);
@@ -98,7 +102,9 @@ export default function GameSetup() {
     }
 
     try {
-      const gameData = initializeGame(trimmedPlayerNames, gameMode, category);
+      // Asegurarse de que el número de impostores no exceda el máximo permitido
+      const validImpostorCount = Math.min(impostorCount, trimmedPlayerNames.length - 1);
+      const gameData = initializeGame(trimmedPlayerNames, gameMode, category, validImpostorCount);
       localStorage.setItem('mrWhiteGameData', JSON.stringify(gameData));
       router.push('/game');
     } catch (error) {
@@ -108,6 +114,18 @@ export default function GameSetup() {
         description: message,
         variant: "destructive",
       });
+    }
+  };
+
+  const incrementImpostors = () => {
+    if (impostorCount < maxImpostors) {
+      setImpostorCount(impostorCount + 1);
+    }
+  };
+
+  const decrementImpostors = () => {
+    if (impostorCount > 1) {
+      setImpostorCount(impostorCount - 1);
     }
   };
 
@@ -345,6 +363,44 @@ export default function GameSetup() {
                   <PlusCircle className="mr-2 h-4 w-4" /> Añadir Jugador
                 </Button>
               )}
+
+              {/* Selector de número de impostores */}
+              <div className="pt-4 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <UserX className="w-5 h-5 text-red-500" />
+                    <span className="font-medium text-foreground">Mr. White</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={decrementImpostors}
+                      disabled={impostorCount <= 1}
+                      className="h-8 w-8 rounded-full"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="w-8 text-center font-bold text-lg text-foreground">
+                      {impostorCount}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={incrementImpostors}
+                      disabled={impostorCount >= maxImpostors}
+                      className="h-8 w-8 rounded-full"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  Máximo: {maxImpostors} {maxImpostors === 1 ? 'impostor' : 'impostores'} ({playerNames.length} jugadores)
+                </p>
+              </div>
 
               <Button
                 type="submit"
